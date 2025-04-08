@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -18,7 +20,7 @@ body {
 
 body {
   color: var(--foreground);
-  background: var(--background);
+  /* background: var(--background); */
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -35,8 +37,31 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
   }
+} */
+
+.auto-search {
+  position: relative;
+  z-index: 1;
+  margin-top: 55px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.auto-search>div {
+  /* width: 272px !important; */
+  background-color: rgb(255, 255, 255) !important;
+  border-radius: 5px;
+  border-width: 5px !important;
+  border-color: rgb(255, 255, 255) !important;
+  width: 300px !important;
+  margin-right: 10px;
+}
+
+.auto-search input[type="text"] {
+  width: 272px !important;
+  border-radius: 15px;
 }
