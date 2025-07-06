@@ -15,7 +15,7 @@ const MapComponent = () => {
     const mapsgl = require("@aerisweather/mapsgl");
 
     mapboxgl.accessToken =
-      "pk.eyJ1Ijoic2lyaXRvZWkiLCJhIjoiY2wxNHN4YjJwMDl4bjNsbzdmdnZ4OGg5bCJ9.xS2LGqPIbk3pUibim5g1mA";
+      "pk.eyJ1IjoiZmVybmNha2UiLCJhIjoiY2txajcyaWwwMDh2bjMwbngwM2hnaGdjZSJ9.w6HwEX8hDJzyYKOC7X7WHg";
 
     const map = new mapboxgl.Map({
       container: mapRef.current,
