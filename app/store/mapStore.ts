@@ -1,13 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // store/mapStore.ts
 import { create } from "zustand";
 import { Map } from "mapbox-gl";
 
 interface MapStore {
-  mapRef:  Map | null | undefined;
+  mapRef:  any;
   controllerRef: any | null;
 //   setMap: (map: any) => void;
-  setMap: (map: Map) => void;
-
+  setMap: (mapRef: Map) => void;
   setController: (controller: any) => void;
 }
 
