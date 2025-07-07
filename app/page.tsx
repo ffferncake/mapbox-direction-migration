@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import "@aerisweather/mapsgl/dist/mapsgl.css";
 import { useMapStore } from "./store/mapStore"; // Zustand store for global map management
+import LeftNav from "./feature/LeftNav/LeftNav";
 
 const MapComponent = () => {
   const mapRefContainer = useRef<any>(null);
@@ -21,12 +22,12 @@ const MapComponent = () => {
 
     const map = new mapboxgl.Map({
       container: mapRefContainer.current,
-      style: 'mapbox://styles/mapbox/standard',
+      style: "mapbox://styles/mapbox/standard",
       zoom: 16.8,
       center: [24.951528, 60.169573],
       pitch: 74,
       bearing: 12.8,
-      hash: true,
+      hash: true
       // projection: "mercator"
     });
     setMap(map);
@@ -46,42 +47,43 @@ const MapComponent = () => {
     // });
   }, [setMap]);
 
-
   useEffect(() => {
     if (!mapRef) return;
 
     const handleLoad = () => {
-      mapRef.setConfigProperty?.('basemap', 'lightPreset', 'dawn');
+      mapRef.setConfigProperty?.("basemap", "lightPreset", "dawn");
 
       const zoomBasedReveal = (value: any) => {
-        return ['interpolate', ['linear'], ['zoom'], 11, 0.0, 13, value];
+        return ["interpolate", ["linear"], ["zoom"], 11, 0.0, 13, value];
       };
 
       mapRef.setRain?.({
         density: zoomBasedReveal(0.5),
         intensity: 1.0,
-        color: '#a8adbc',
+        color: "#a8adbc",
         opacity: 0.7,
         vignette: zoomBasedReveal(1.0),
-        'vignette-color': '#464646',
+        "vignette-color": "#464646",
         direction: [0, 80],
-        'droplet-size': [2.6, 18.2],
-        'distortion-strength': 0.7,
-        'center-thinning': 0,
+        "droplet-size": [2.6, 18.2],
+        "distortion-strength": 0.7,
+        "center-thinning": 0
       });
     };
 
-    mapRef.on('style.load', handleLoad);
+    mapRef.on("style.load", handleLoad);
 
     return () => {
-      mapRef.off('style.load', handleLoad);
+      mapRef.off("style.load", handleLoad);
     };
   }, [mapRef]);
 
-
   return (
     <div>
-      <div ref={mapRefContainer} style={{ height: "100vh", width: "100%" }}></div>
+      <div
+        ref={mapRefContainer}
+        style={{ height: "100vh", width: "100%" }}
+      ></div>
     </div>
   );
 };
