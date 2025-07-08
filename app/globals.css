@@ -1,0 +1,58 @@
+
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+@font-face {
+  font-family: "Roboto";
+  src: url("/fonts/Roboto.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+button,
+body {
+  font-family: "Roboto", sans-serif;
+}
+
+.roboto-font {
+  font-family: "Roboto", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* 
+p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 28px;
+} */
+
+/* body {
+  color: var(--foreground);
+  background: var(--background);
+} */
