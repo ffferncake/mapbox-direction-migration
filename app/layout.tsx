@@ -1,28 +1,15 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
 import "./globals.css";
-import LeftNav from "./feature/LeftNav/LeftNav";
-import { Roboto } from "next/font/google";
-import Header from "./feature/Header/Header";
+import LeftNav from "./_components/feature/LeftNav/LeftNav";
+// import { Roboto } from "next/font/google";
+import Header from "./_components/feature/Header/Header";
 
-// const geistSans = localFont({
-//   src: "./fonts/GeistVF.woff",
-//   variable: "--font-geist-sans",
-//   weight: "100 900"
+// const roboto = Roboto({
+//   subsets: ["latin"],
+//   weight: ["400", "700"], // include weights you actually need
+//   variable: "--font-roboto", // for Tailwind use
+//   display: "swap"
 // });
-
-// const geistMono = localFont({
-//   src: "./fonts/GeistMonoVF.woff",
-//   variable: "--font-geist-mono",
-//   weight: "100 900"
-// });
-
-const roboto = Roboto({
-  subsets: ["latin"],
-  weight: ["400", "700"], // include weights you actually need
-  variable: "--font-roboto", // for Tailwind use
-  display: "swap"
-});
 
 export const metadata: Metadata = {
   title: "Situation Map"
@@ -43,14 +30,20 @@ export default function RootLayout({
         <Header />
         <div
           style={{
-            paddingTop: "56px",
             height: "100vh",
             display: "flex",
-            overflow: "hidden"
+            overflow: "hidden",
+            margin: 0,
+            padding: 0
           }}
         >
           <LeftNav />
-          <main style={{ flex: 1, height: "100%", overflow: "hidden" }}>
+          <main style={{
+            flex: 1,
+            overflow: "hidden",
+            margin: 0,
+            padding: 0
+          }}>
             {children}
           </main>
         </div>

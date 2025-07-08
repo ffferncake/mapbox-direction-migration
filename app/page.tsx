@@ -6,7 +6,6 @@ import { useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import "@aerisweather/mapsgl/dist/mapsgl.css";
 import { useMapStore } from "./store/mapStore"; // Zustand store for global map management
-import LeftNav from "./feature/LeftNav/LeftNav";
 
 const MapComponent = () => {
   const mapRefContainer = useRef<any>(null);
@@ -17,8 +16,7 @@ const MapComponent = () => {
     const mapboxgl = require("mapbox-gl");
     // const mapsgl = require("@aerisweather/mapsgl");
 
-    mapboxgl.accessToken =
-      "pk.eyJ1IjoiZmVybmNha2UiLCJhIjoiY2txajcyaWwwMDh2bjMwbngwM2hnaGdjZSJ9.w6HwEX8hDJzyYKOC7X7WHg";
+    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
 
     const map = new mapboxgl.Map({
       container: mapRefContainer.current,
@@ -51,7 +49,9 @@ const MapComponent = () => {
     if (!mapRef) return;
 
     const handleLoad = () => {
-      mapRef.setConfigProperty?.("basemap", "lightPreset", "dawn");
+      // mapRef.setConfigProperty?.("basemap", "lightPreset", "dawn");
+      mapRef.setConfigProperty('basemap', 'lightPreset', 'dusk');
+
 
       const zoomBasedReveal = (value: any) => {
         return ["interpolate", ["linear"], ["zoom"], 11, 0.0, 13, value];
