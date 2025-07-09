@@ -4,9 +4,8 @@ import { create } from "zustand";
 import { Map } from "mapbox-gl";
 
 interface MapStore {
-  mapRef:  any;
+  mapRef: any;
   controllerRef: any | null;
-//   setMap: (map: any) => void;
   setMap: (mapRef: Map) => void;
   setController: (controller: any) => void;
 }
@@ -14,8 +13,6 @@ interface MapStore {
 export const useMapStore = create<MapStore>((set) => ({
   mapRef: null,
   controllerRef: null,
-//   setMap: (map) => set({ mapRef: map }),
   setMap: (map: Map) => set({ mapRef: map }),
-
   setController: (controller) => set({ controllerRef: controller }),
 }));

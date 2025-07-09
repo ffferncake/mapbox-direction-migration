@@ -4,13 +4,6 @@ import LeftNav from "./_components/feature/LeftNav/LeftNav";
 // import { Roboto } from "next/font/google";
 import Header from "./_components/feature/Header/Header";
 
-// const roboto = Roboto({
-//   subsets: ["latin"],
-//   weight: ["400", "700"], // include weights you actually need
-//   variable: "--font-roboto", // for Tailwind use
-//   display: "swap"
-// });
-
 export const metadata: Metadata = {
   title: "Situation Map"
 };
@@ -20,6 +13,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
     <html lang="en">
       <link rel="shortcut icon" href="/images/icn_traffic_active.svg" />

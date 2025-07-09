@@ -3,13 +3,7 @@
 "use client";
 import React, { useState } from "react";
 import styles from "./LeftNav.module.css";
-
-type LayerType =
-  | "event"
-  | "hospital"
-  | "traffic"
-  | "temperature"
-  | "precipitation";
+import { layerStore, LayerType } from "../../../provider/layerStore"; // Zustand store for layer management
 
 const layers: LayerType[] = [
   "event",
@@ -20,7 +14,7 @@ const layers: LayerType[] = [
 ];
 
 export default function LeftNav() {
-  const [activeLayer, setActiveLayer] = useState<LayerType | null>("event");
+  const { activeLayer, setActiveLayer } = layerStore();
   const [hoverLayer, setHoverLayer] = useState<LayerType | null>(null);
 
   const getIconSrc = (layer: LayerType) => {
@@ -31,37 +25,35 @@ export default function LeftNav() {
   return (
     <div className={styles.leftNav}>
       {/* <div className={styles.section}> */}
-        <p className={styles.subtitle}>Layers</p>
-        <div className={styles.layerGrid}>
-          {layers.map((layer) => (
+      <p className={styles.subtitle}>Layers</p>
+      <div className={styles.layerGrid}>
+        {layers.map((layer) => (
+          <div
+            key={layer}
+            className={styles.layerWrapper}
+            onClick={() => setActiveLayer(layer)}
+            onMouseEnter={() => setHoverLayer(layer)}
+            onMouseLeave={() => setHoverLayer(null)}
+          >
             <div
-              key={layer}
-              className={styles.layerWrapper}
-              onClick={() => setActiveLayer(layer)}
-              onMouseEnter={() => setHoverLayer(layer)}
-              onMouseLeave={() => setHoverLayer(null)}
+              className={`${styles.layerItem} ${layer === activeLayer ? styles.active : ""
+                }`}
             >
-              <div
-                className={`${styles.layerItem} ${
-                  layer === activeLayer ? styles.active : ""
-                }`}
-              >
-                <img
-                  src={getIconSrc(layer)}
-                  alt={layer}
-                  className={styles.icon}
-                />
-              </div>
-              <span
-                className={`${styles.label} ${
-                  layer === activeLayer ? styles.activeLabel : ""
-                }`}
-              >
-                {layer.charAt(0).toUpperCase() + layer.slice(1)}
-              </span>
+              <img
+                src={getIconSrc(layer)}
+                alt={layer}
+                className={styles.icon}
+              />
             </div>
-          ))}
-        </div>
+            <span
+              className={`${styles.label} ${layer === activeLayer ? styles.activeLabel : ""
+                }`}
+            >
+              {layer.charAt(0).toUpperCase() + layer.slice(1)}
+            </span>
+          </div>
+        ))}
+      </div>
       {/* </div> */}
 
       <hr className={styles.divider} />

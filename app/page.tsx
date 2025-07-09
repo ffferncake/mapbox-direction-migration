@@ -5,12 +5,15 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import "@aerisweather/mapsgl/dist/mapsgl.css";
-import { useMapStore } from "./store/mapStore"; // Zustand store for global map management
+import { useMapStore } from "./provider/mapStore"; // Zustand store for global map management
+import TrafficIncidentLayer from "./_components/feature/LeftNav/_component/TrafficIncidentLayer";
+import { layerStore } from "@/app/provider/layerStore";
 
 const MapComponent = () => {
   const mapRefContainer = useRef<any>(null);
   // const controllerRef = useRef<any>(null);
   const { mapRef, setMap } = useMapStore(); // Zustand setters
+  const { activeLayer } = layerStore();
 
   useEffect(() => {
     const mapboxgl = require("mapbox-gl");
@@ -84,6 +87,7 @@ const MapComponent = () => {
         ref={mapRefContainer}
         style={{ height: "100vh", width: "100%" }}
       ></div>
+      {activeLayer === "event" && <TrafficIncidentLayer />}
     </div>
   );
 };
