@@ -23,12 +23,13 @@ const MapComponent = () => {
 
     const map = new mapboxgl.Map({
       container: mapRefContainer.current,
-      style: "mapbox://styles/mapbox/standard",
-      zoom: 16.8,
-      center: [24.951528, 60.169573],
-      pitch: 74,
-      bearing: 12.8,
-      hash: true
+      // style: "mapbox://styles/mapbox/standard",
+      style:"mapbox://styles/mapbox/navigation-preview-night-v4",
+      zoom: 13,
+      center: [100.4818, 13.7463],
+      // pitch: 74,
+      // bearing: 12.8,
+      // hash: true
       // projection: "mercator"
     });
     setMap(map);
@@ -60,18 +61,18 @@ const MapComponent = () => {
         return ["interpolate", ["linear"], ["zoom"], 11, 0.0, 13, value];
       };
 
-      mapRef.setRain?.({
-        density: zoomBasedReveal(0.5),
-        intensity: 1.0,
-        color: "#a8adbc",
-        opacity: 0.7,
-        vignette: zoomBasedReveal(1.0),
-        "vignette-color": "#464646",
-        direction: [0, 80],
-        "droplet-size": [2.6, 18.2],
-        "distortion-strength": 0.7,
-        "center-thinning": 0
-      });
+      // mapRef.setRain?.({
+      //   density: zoomBasedReveal(0.5),
+      //   intensity: 1.0,
+      //   color: "#a8adbc",
+      //   opacity: 0.7,
+      //   vignette: zoomBasedReveal(1.0),
+      //   "vignette-color": "#464646",
+      //   direction: [0, 80],
+      //   "droplet-size": [2.6, 18.2],
+      //   "distortion-strength": 0.7,
+      //   "center-thinning": 0
+      // });
     };
 
     mapRef.on("style.load", handleLoad);
@@ -87,7 +88,6 @@ const MapComponent = () => {
         ref={mapRefContainer}
         style={{ height: "100vh", width: "100%" }}
       ></div>
-      {activeLayer === "event" && <IncidentLayer />}
     </div>
   );
 };

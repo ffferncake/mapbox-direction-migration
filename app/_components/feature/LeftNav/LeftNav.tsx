@@ -31,13 +31,17 @@ export default function LeftNav() {
           <div
             key={layer}
             className={styles.layerWrapper}
-            onClick={() => setActiveLayer(layer)}
+            onClick={() => {
+              console.log("Clicked", layer);
+              setActiveLayer(layer);
+            }}
             onMouseEnter={() => setHoverLayer(layer)}
             onMouseLeave={() => setHoverLayer(null)}
           >
             <div
-              className={`${styles.layerItem} ${layer === activeLayer ? styles.active : ""
-                }`}
+              className={`${styles.layerItem} ${
+                layer === activeLayer ? styles.active : ""
+              }`}
             >
               <img
                 src={getIconSrc(layer)}
@@ -46,8 +50,9 @@ export default function LeftNav() {
               />
             </div>
             <span
-              className={`${styles.label} ${layer === activeLayer ? styles.activeLabel : ""
-                }`}
+              className={`${styles.label} ${
+                layer === activeLayer ? styles.activeLabel : ""
+              }`}
             >
               {layer.charAt(0).toUpperCase() + layer.slice(1)}
             </span>
