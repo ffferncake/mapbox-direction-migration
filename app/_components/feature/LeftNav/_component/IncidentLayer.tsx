@@ -27,10 +27,6 @@ export default function IncidentLayer() {
     if (!map) return;
 
     if (activeLayer !== "event") {
-      console.log(
-        "Removing trafficIncident layer because activeLayer is:",
-        activeLayer
-      );
       if (map.getLayer("trafficIncident")) {
         map.removeLayer("trafficIncident");
       }

@@ -6,9 +6,10 @@ import IncidentLayer from "@/app/_components/feature/LeftNav/_component/Incident
 export default function ClientLayerHandler() {
   const { activeLayer } = layerStore();
 
-  if (activeLayer === "event") {
-    return <IncidentLayer />;
-  }
+  console.log("ClientLayerHandler activeLayer:", activeLayer);
+  //   if (activeLayer === "event") {
+  return <IncidentLayer />;
+  //   }
 
   return null;
 }
