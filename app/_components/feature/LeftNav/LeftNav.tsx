@@ -4,6 +4,7 @@
 import React, { useState } from "react";
 import styles from "./LeftNav.module.css";
 import { layerStore, LayerType } from "../../../provider/layerStore"; // Zustand store for layer management
+import { useMapStore } from "@/app/provider/mapStore";
 
 const layers: LayerType[] = [
   "event",
@@ -16,6 +17,12 @@ const layers: LayerType[] = [
 export default function LeftNav() {
   const { activeLayer, setActiveLayer } = layerStore();
   const [hoverLayer, setHoverLayer] = useState<LayerType | null>(null);
+  const { cursorLatLng, zoom } = useMapStore();
+  const formattedLat = cursorLatLng?.lat.toFixed(5) ?? "---";
+  const formattedLng = cursorLatLng?.lng.toFixed(5) ?? "---";
+  const formattedZoom = zoom?.toFixed(2) ?? "---";
+
+  console.log("cursorLatLng:", cursorLatLng);
 
   const getIconSrc = (layer: LayerType) => {
     const isActive = layer === activeLayer || layer === hoverLayer;
@@ -65,9 +72,11 @@ export default function LeftNav() {
 
       <div className={styles.section}>
         <p className={styles.subtitle}>📍 Coordinate</p>
-        <p>Lat : 13.771 | Lng: 100.493</p>
-        <p>Zoom Level : 12.60</p>
-        <p>MGRS : 47PPR61442298</p>
+        <p>
+          Lat : {formattedLat} | Lng: {formattedLng}
+        </p>
+        <p>Zoom Level : {formattedZoom}</p>
+        {/* <p>MGRS : 47PPR61442298</p> */}
       </div>
 
       <hr className={styles.divider} />

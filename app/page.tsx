@@ -12,21 +12,21 @@ import { layerStore } from "@/app/provider/layerStore";
 const MapComponent = () => {
   const mapRefContainer = useRef<any>(null);
   // const controllerRef = useRef<any>(null);
-  const { mapRef, setMap } = useMapStore(); // Zustand setters
+  const { mapRef, setMap, setCursorLatLng, setZoom } = useMapStore(); // Zustand setters
   const { activeLayer } = layerStore();
 
   useEffect(() => {
     const mapboxgl = require("mapbox-gl");
     // const mapsgl = require("@aerisweather/mapsgl");
 
-    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
+    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
     const map = new mapboxgl.Map({
       container: mapRefContainer.current,
       // style: "mapbox://styles/mapbox/standard",
-      style:"mapbox://styles/mapbox/navigation-preview-night-v4",
+      style: "mapbox://styles/mapbox/navigation-preview-night-v4",
       zoom: 13,
-      center: [100.4818, 13.7463],
+      center: [100.4818, 13.7463]
       // pitch: 74,
       // bearing: 12.8,
       // hash: true
@@ -54,8 +54,7 @@ const MapComponent = () => {
 
     const handleLoad = () => {
       // mapRef.setConfigProperty?.("basemap", "lightPreset", "dawn");
-      mapRef.setConfigProperty('basemap', 'lightPreset', 'dusk');
-
+      mapRef.setConfigProperty("basemap", "lightPreset", "dusk");
 
       const zoomBasedReveal = (value: any) => {
         return ["interpolate", ["linear"], ["zoom"], 11, 0.0, 13, value];
@@ -81,6 +80,18 @@ const MapComponent = () => {
       mapRef.off("style.load", handleLoad);
     };
   }, [mapRef]);
+
+  useEffect(() => {
+    if (!mapRef) return;
+    const handleMouseMove = (e: mapboxgl.MapMouseEvent) => {
+      const { lng, lat } = e.lngLat;
+      setCursorLatLng({ lat, lng });
+      setZoom(mapRef.getZoom());
+    };
+
+    mapRef.on("mousemove", handleMouseMove);
+    return () => mapRef.off("mousemove", handleMouseMove);
+  }, [mapRef, setCursorLatLng, setZoom]);
 
   return (
     <div>
