@@ -6,7 +6,7 @@ import { useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import "@aerisweather/mapsgl/dist/mapsgl.css";
 import { useMapStore } from "./provider/mapStore"; // Zustand store for global map management
-import TrafficIncidentLayer from "./_components/feature/LeftNav/_component/TrafficIncidentLayer";
+import IncidentLayer from "./_components/feature/LeftNav/_component/IncidentLayer";
 import { layerStore } from "@/app/provider/layerStore";
 
 const MapComponent = () => {
@@ -87,7 +87,7 @@ const MapComponent = () => {
         ref={mapRefContainer}
         style={{ height: "100vh", width: "100%" }}
       ></div>
-      {activeLayer === "event" && <TrafficIncidentLayer />}
+      {activeLayer === "event" && <IncidentLayer />}
     </div>
   );
 };

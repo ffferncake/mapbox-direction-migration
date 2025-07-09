@@ -5,9 +5,21 @@ import { layerStore } from "@/app/provider/layerStore";
 import mapboxgl from "mapbox-gl";
 import { buffer, bboxPolygon } from "@turf/turf"; // Ensure turf is installed
 
-export default function TrafficIncidentLayer() {
+export default function IncidentLayer() {
     const { mapRef } = useMapStore();
-    const { activeLayer } = layerStore();
+    const { activeLayer, mapsgl, setMapsgl } = layerStore();
+    const client_id = process.env.NEXT_PUBLIC_XWEATHER_CLIENT_ID
+    const client_secret = process.env.NEXT_PUBLIC_XWEATHER_CLIENT_SECRET
+
+    // 컴포넌트 마운트 시에만 mapsgl을 동적으로 불러옵니다.
+    useEffect(() => {
+        try {
+            const mapsgl = require('@aerisweather/mapsgl')
+            setMapsgl(mapsgl)
+        } catch (error) {
+            console.error('Error loading mapsgl module:', error)
+        }
+    }, [])
 
     useEffect(() => {
         if (activeLayer !== "event" || !mapRef?.current) return;
