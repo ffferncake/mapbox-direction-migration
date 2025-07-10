@@ -22,8 +22,6 @@ export default function LeftNav() {
   const formattedLng = cursorLatLng?.lng.toFixed(5) ?? "---";
   const formattedZoom = zoom?.toFixed(2) ?? "---";
 
-  console.log("cursorLatLng:", cursorLatLng);
-
   const getIconSrc = (layer: LayerType) => {
     const isActive = layer === activeLayer || layer === hoverLayer;
     return `/images/icn_${layer}${isActive ? "_active" : ""}.svg`;
