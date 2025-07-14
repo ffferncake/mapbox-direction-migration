@@ -8,46 +8,96 @@ import "@aerisweather/mapsgl/dist/mapsgl.css";
 import { useMapStore } from "./provider/mapStore"; // Zustand store for global map management
 import IncidentLayer from "./_components/feature/LeftNav/_component/IncidentLayer";
 import { layerStore } from "@/app/provider/layerStore";
+import "@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions.css"; // Import Mapbox Directions CSS
+import mapboxgl from "mapbox-gl";
+import MapboxDirections from "@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions";
 
 const MapComponent = () => {
   const mapRefContainer = useRef<any>(null);
   // const controllerRef = useRef<any>(null);
   const { mapRef, setMap, setCursorLatLng, setZoom } = useMapStore(); // Zustand setters
-  const { activeLayer } = layerStore();
 
+  // useEffect(() => {
+  //   const mapboxgl = require("mapbox-gl");
+  //   const MapboxDirections = require('@mapbox/mapbox-gl-directions');
+  //   // const mapsgl = require("@aerisweather/mapsgl");
+
+  //   mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+
+  //   const map = new mapboxgl.Map({
+  //     container: mapRefContainer.current,
+  //     style: "mapbox://styles/mapbox/standard",
+  //     // style: "mapbox://styles/mapbox/navigation-preview-night-v4",
+  //     zoom: 13,
+  //     center: [100.4818, 13.7463],
+  //     // pitch: 74,
+  //     // bearing: 12.8,
+  //     // hash: true
+  //     projection: "mercator"
+  //   });
+  //   setMap(map);
+
+
+  //   const directions = new MapboxDirections({
+  //     accessToken: mapboxgl.accessToken,
+  //     // interactive: false,
+  //     unit: "metric",
+  //     profile: "mapbox/driving",
+  //     alternatives: true,
+  //     geometries: "geojson",
+  //     controls: { instructions: true },
+  //     flyTo: true
+  //   });
+
+  //   map.addControl(directions, 'top-left');
+
+  //   // const account = new mapsgl.Account(
+  //   //   "dj3hazg1e9Evj9EcFg9fz",
+  //   //   "6ngFwXzTQx7scqQbSeXGUlvWVS8IcAL4KzeHOsBc"
+  //   // );
+
+  //   // const controller = new mapsgl.MapboxMapController(map, {
+  //   //   account
+  //   // });
+  //   // controllerRef.current = controller;
+
+  //   // controller.on("load", () => {
+  //   //   setController(controller);
+  //   // });
+  // }, [setMap]);
   useEffect(() => {
-    const mapboxgl = require("mapbox-gl");
-    // const mapsgl = require("@aerisweather/mapsgl");
+    const loadMap = async () => {
+      // const mapboxgl = await import("mapbox-gl");
+      // const mapboxgl = require("mapbox-gl");
 
-    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+      mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
-    const map = new mapboxgl.Map({
-      container: mapRefContainer.current,
-      // style: "mapbox://styles/mapbox/standard",
-      style: "mapbox://styles/mapbox/navigation-preview-night-v4",
-      zoom: 13,
-      center: [100.4818, 13.7463]
-      // pitch: 74,
-      // bearing: 12.8,
-      // hash: true
-      // projection: "mercator"
-    });
-    setMap(map);
+      const map = new mapboxgl.Map({
+        container: mapRefContainer.current,
+        style: "mapbox://styles/mapbox/standard",
+        zoom: 13,
+        center: [100.4818, 13.7463],
+        projection: "mercator"
+      });
 
-    // const account = new mapsgl.Account(
-    //   "dj3hazg1e9Evj9EcFg9fz",
-    //   "6ngFwXzTQx7scqQbSeXGUlvWVS8IcAL4KzeHOsBc"
-    // );
+      setMap(map);
 
-    // const controller = new mapsgl.MapboxMapController(map, {
-    //   account
-    // });
-    // controllerRef.current = controller;
+      const directions = new MapboxDirections({
+        accessToken: mapboxgl.accessToken,
+        unit: "metric",
+        profile: "mapbox/driving",
+        alternatives: true,
+        geometries: "geojson",
+        controls: { instructions: true },
+        flyTo: true
+      });
 
-    // controller.on("load", () => {
-    //   setController(controller);
-    // });
+      map.addControl(directions, 'top-right');
+    };
+
+    loadMap();
   }, [setMap]);
+
 
   useEffect(() => {
     if (!mapRef) return;
@@ -92,6 +142,7 @@ const MapComponent = () => {
     mapRef.on("mousemove", handleMouseMove);
     return () => mapRef.off("mousemove", handleMouseMove);
   }, [mapRef, setCursorLatLng, setZoom]);
+
 
   return (
     <div>

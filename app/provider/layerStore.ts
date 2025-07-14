@@ -12,8 +12,20 @@ export interface LayerStore {
     stormLayerVisible: boolean;
     setStormLayerVisible: (visible: boolean) => void;
 
-    activeLayer: LayerType | null;
-    setActiveLayer: (layer: LayerType) => void;
+    eventToggle: boolean,
+    setEventToggle: (toggle: boolean) => void;
+
+    hospitalToggle: boolean,
+    setHospitalToggle: (toggle: boolean) => void;
+
+    temperatureToggle: boolean,
+    setTemperatureToggle: (toggle: boolean) => void;
+
+    precipitationToggle: boolean,
+    setPrecipitationToggle: (toggle: boolean) => void;
+
+    trafficToggle: boolean,
+    setTrafficToggle: (toggle: boolean) => void;
 
     controllerRef: any | null
     setControllerRef: (controller: any | null) => void
@@ -27,8 +39,20 @@ export const layerStore = create<LayerStore>((set) => ({
     stormLayerVisible: false,
     setStormLayerVisible: (visible: boolean) => set({ stormLayerVisible: visible }),
 
-    activeLayer: "event",
-    setActiveLayer: (layer) => set({ activeLayer: layer }),
+    eventToggle: false,
+    setEventToggle: (toggle: boolean) => set({ eventToggle: toggle }),
+
+    hospitalToggle: false,
+    setHospitalToggle: (toggle: boolean) => set({ hospitalToggle: toggle }),
+
+    temperatureToggle: false,
+    setTemperatureToggle: (toggle: boolean) => set({ temperatureToggle: toggle }),
+
+    precipitationToggle: false,
+    setPrecipitationToggle: (toggle: boolean) => set({ precipitationToggle: toggle }),
+
+    trafficToggle: false,
+    setTrafficToggle:  (toggle: boolean) => set({ trafficToggle: toggle }),
 
     controllerRef: null,
     setControllerRef: (controller) => set({ controllerRef: controller }),

@@ -37,7 +37,6 @@ export default function RootLayout({
             padding: 0
           }}
         >
-          <LeftNav />
           <main
             style={{
               flex: 1,
@@ -46,6 +45,7 @@ export default function RootLayout({
               padding: 0
             }}
           >
+            
             {children}
             <ClientLayerHandler />
           </main>

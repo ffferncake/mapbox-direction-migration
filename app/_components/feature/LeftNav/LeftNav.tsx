@@ -15,54 +15,64 @@ const layers: LayerType[] = [
 ];
 
 export default function LeftNav() {
-  const { activeLayer, setActiveLayer } = layerStore();
+  const {
+    eventToggle, setEventToggle,
+    hospitalToggle, setHospitalToggle,
+    trafficToggle, setTrafficToggle,
+    temperatureToggle, setTemperatureToggle,
+    precipitationToggle, setPrecipitationToggle,
+  } = layerStore();
   const [hoverLayer, setHoverLayer] = useState<LayerType | null>(null);
   const { cursorLatLng, zoom } = useMapStore();
   const formattedLat = cursorLatLng?.lat.toFixed(5) ?? "---";
   const formattedLng = cursorLatLng?.lng.toFixed(5) ?? "---";
   const formattedZoom = zoom?.toFixed(2) ?? "---";
 
-  const getIconSrc = (layer: LayerType) => {
-    const isActive = layer === activeLayer || layer === hoverLayer;
-    return `/images/icn_${layer}${isActive ? "_active" : ""}.svg`;
+  // const getIconSrc = (layer: LayerType) => {
+  //   const isActive = layer === activeLayer || layer === hoverLayer;
+  //   return `/images/icn_${layer}${isActive ? "_active" : ""}.svg`;
+  // };
+
+  const toggleMap: Record<LayerType, { value: boolean; set: (val: boolean) => void }> = {
+    event: { value: eventToggle, set: setEventToggle },
+    hospital: { value: hospitalToggle, set: setHospitalToggle },
+    traffic: { value: trafficToggle, set: setTrafficToggle },
+    temperature: { value: temperatureToggle, set: setTemperatureToggle },
+    precipitation: { value: precipitationToggle, set: setPrecipitationToggle },
   };
+
 
   return (
     <div className={styles.leftNav}>
       {/* <div className={styles.section}> */}
       <p className={styles.subtitle}>Layers</p>
       <div className={styles.layerGrid}>
-        {layers.map((layer) => (
-          <div
-            key={layer}
-            className={styles.layerWrapper}
-            onClick={() => {
-              console.log("Clicked", layer);
-              setActiveLayer(layer);
-            }}
-            onMouseEnter={() => setHoverLayer(layer)}
-            onMouseLeave={() => setHoverLayer(null)}
-          >
+        {layers.map((layer) => {
+          const { value, set } = toggleMap[layer];
+          const isActive = value || layer === hoverLayer;
+
+          return (
             <div
-              className={`${styles.layerItem} ${
-                layer === activeLayer ? styles.active : ""
-              }`}
+              key={layer}
+              className={styles.layerWrapper}
+              onClick={() => set(!value)}
+              onMouseEnter={() => setHoverLayer(layer)}
+              onMouseLeave={() => setHoverLayer(null)}
             >
-              <img
-                src={getIconSrc(layer)}
-                alt={layer}
-                className={styles.icon}
-              />
+              <div className={`${styles.layerItem} ${value ? styles.active : ""}`}>
+                <img
+                  src={`/images/icn_${layer}${isActive ? "_active" : ""}.svg`}
+                  alt={layer}
+                  className={styles.icon}
+                />
+              </div>
+              <span className={`${styles.label} ${value ? styles.activeLabel : ""}`}>
+                {layer.charAt(0).toUpperCase() + layer.slice(1)}
+              </span>
             </div>
-            <span
-              className={`${styles.label} ${
-                layer === activeLayer ? styles.activeLabel : ""
-              }`}
-            >
-              {layer.charAt(0).toUpperCase() + layer.slice(1)}
-            </span>
-          </div>
-        ))}
+          );
+        })}
+
       </div>
       {/* </div> */}
 
