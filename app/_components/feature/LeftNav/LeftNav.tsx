@@ -21,6 +21,7 @@ export default function LeftNav() {
     trafficToggle, setTrafficToggle,
     temperatureToggle, setTemperatureToggle,
     precipitationToggle, setPrecipitationToggle,
+    routeReports
   } = layerStore();
   const [hoverLayer, setHoverLayer] = useState<LayerType | null>(null);
   const { cursorLatLng, zoom } = useMapStore();
@@ -28,10 +29,7 @@ export default function LeftNav() {
   const formattedLng = cursorLatLng?.lng.toFixed(5) ?? "---";
   const formattedZoom = zoom?.toFixed(2) ?? "---";
 
-  // const getIconSrc = (layer: LayerType) => {
-  //   const isActive = layer === activeLayer || layer === hoverLayer;
-  //   return `/images/icn_${layer}${isActive ? "_active" : ""}.svg`;
-  // };
+  console.log("routeReports", routeReports);
 
   const toggleMap: Record<LayerType, { value: boolean; set: (val: boolean) => void }> = {
     event: { value: eventToggle, set: setEventToggle },
@@ -41,7 +39,6 @@ export default function LeftNav() {
     precipitation: { value: precipitationToggle, set: setPrecipitationToggle },
   };
 
-
   return (
     <div className={styles.leftNav}>
       {/* <div className={styles.section}> */}
@@ -50,7 +47,6 @@ export default function LeftNav() {
         {layers.map((layer) => {
           const { value, set } = toggleMap[layer];
           const isActive = value || layer === hoverLayer;
-
           return (
             <div
               key={layer}

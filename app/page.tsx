@@ -11,11 +11,16 @@ import { layerStore } from "@/app/provider/layerStore";
 import "@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions.css"; // Import Mapbox Directions CSS
 import mapboxgl from "mapbox-gl";
 import MapboxDirections from "@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions";
+import { RulerControl, CompassControl, ZoomControl } from "mapbox-gl-controls";
+import { bboxPolygon, buffer, booleanDisjoint } from "@turf/turf";
+
+var polyline = require("@mapbox/polyline");
 
 const MapComponent = () => {
   const mapRefContainer = useRef<any>(null);
   // const controllerRef = useRef<any>(null);
-  const { mapRef, setMap, setCursorLatLng, setZoom } = useMapStore(); // Zustand setters
+  const { mapRef, setMap, setCursorLatLng, setZoom } = useMapStore();
+  const { trafficIncidentData } = layerStore();
 
   // useEffect(() => {
   //   const mapboxgl = require("mapbox-gl");
@@ -36,7 +41,6 @@ const MapComponent = () => {
   //     projection: "mercator"
   //   });
   //   setMap(map);
-
 
   //   const directions = new MapboxDirections({
   //     accessToken: mapboxgl.accessToken,
@@ -67,9 +71,6 @@ const MapComponent = () => {
   // }, [setMap]);
   useEffect(() => {
     const loadMap = async () => {
-      // const mapboxgl = await import("mapbox-gl");
-      // const mapboxgl = require("mapbox-gl");
-
       mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
       const map = new mapboxgl.Map({
@@ -92,12 +93,76 @@ const MapComponent = () => {
         flyTo: true
       });
 
-      map.addControl(directions, 'top-right');
+      map.addControl(directions, "top-right");
+      map.addControl(new ZoomControl(), "bottom-right");
+      map.addControl(new CompassControl(), "bottom-right");
+      map.on("ruler.on", () => console.log("ruler: on"));
+      map.on("ruler.off", () => console.log("ruler: off"));
+      // with miles:
+      map.addControl(
+        new RulerControl({
+          units: "miles",
+          labelFormat: (n) => `${n.toFixed(2)} miles`
+        }),
+        "bottom-right"
+      );
+
+      map.on("load", () => {
+        if (!trafficIncidentData) return;
+
+        // 1. Create buffer around obstacles
+        const obstacleBuffer: any = buffer(trafficIncidentData, 0.25, {
+          units: "kilometers"
+        });
+
+        // 2. Add visualization layer (optional)
+        if (!map.getSource("obstacle")) {
+          map.addSource("obstacle", {
+            type: "geojson",
+            data: obstacleBuffer
+          });
+
+          map.addLayer({
+            id: "obstacle-layer",
+            type: "fill",
+            source: "obstacle",
+            paint: {
+              "fill-color": "#de2d26",
+              "fill-opacity": 0.5
+            }
+          });
+        }
+
+        // 3. Hook into Mapbox Directions results
+        directions.on("route", (event: any) => {
+          const routes = event.route;
+          for (let i = 0; i < routes.length; i++) {
+            const route = routes[i];
+            const geojsonRoute:any = {
+              type: "Feature",
+              geometry: route.geometry
+            };
+
+            const isClear = booleanDisjoint(obstacleBuffer, geojsonRoute);
+
+            const color = isClear ? "#2ca25f" : "#de2d26";
+
+            // Paint logic (optional, MapboxDirections uses default blue otherwise)
+            map.setPaintProperty(`directions-route-${i}`, "line-color", color);
+
+            // You can also console or show alerts:
+            console.log(
+              `Route ${i + 1}: ${
+                isClear ? "✅ No collision" : "⚠️ Obstacle intersected"
+              }`
+            );
+          }
+        });
+      });
     };
 
     loadMap();
   }, [setMap]);
-
 
   useEffect(() => {
     if (!mapRef) return;
@@ -142,7 +207,6 @@ const MapComponent = () => {
     mapRef.on("mousemove", handleMouseMove);
     return () => mapRef.off("mousemove", handleMouseMove);
   }, [mapRef, setCursorLatLng, setZoom]);
-
 
   return (
     <div>
