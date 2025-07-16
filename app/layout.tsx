@@ -42,7 +42,7 @@ export default function RootLayout({
               flex: 1,
               overflow: "hidden",
               margin: 0,
-              padding: 0
+              padding: 0,
             }}
           >
             

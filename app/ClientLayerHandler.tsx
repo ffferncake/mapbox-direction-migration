@@ -16,17 +16,18 @@ export default function ClientLayerHandler() {
       <button
         onClick={() => setShowNav(!showNav)}
         className={styles.toggleButton}
-        style={{ left: showNav ? "280px" : "0px" }}
+        style={{ left: showNav ? "285px" : "0px" }}
       >
         <span
-          className={`${styles.toggleIconRotated} ${showNav ? styles.toggleIcon : ""}`}
+          className={`${styles.toggleIcon} ${
+            showNav ? styles.toggleIconRotated : ""
+          }`}
         >
-          ❮
+          ❯
         </span>
-      </button >
+      </button>
     </>
-
-  )
+  );
 
   //   }
 

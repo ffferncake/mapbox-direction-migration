@@ -20,7 +20,8 @@ const MapComponent = () => {
   const mapRefContainer = useRef<any>(null);
   // const controllerRef = useRef<any>(null);
   const { mapRef, setMap, setCursorLatLng, setZoom } = useMapStore();
-  const { trafficIncidentData } = layerStore();
+  const { trafficIncidentData, setRouteReports } = layerStore();
+  const directionsRef = useRef<any>(null);
 
   // useEffect(() => {
   //   const mapboxgl = require("mapbox-gl");
@@ -83,7 +84,7 @@ const MapComponent = () => {
 
       setMap(map);
 
-      const directions = new MapboxDirections({
+      directionsRef.current = new MapboxDirections({
         accessToken: mapboxgl.accessToken,
         unit: "metric",
         profile: "mapbox/driving",
@@ -93,7 +94,7 @@ const MapComponent = () => {
         flyTo: true
       });
 
-      map.addControl(directions, "top-right");
+      map.addControl(directionsRef.current, "top-right");
       map.addControl(new ZoomControl(), "bottom-right");
       map.addControl(new CompassControl(), "bottom-right");
       map.on("ruler.on", () => console.log("ruler: on"));
@@ -106,16 +107,29 @@ const MapComponent = () => {
         }),
         "bottom-right"
       );
+    };
 
-      map.on("load", () => {
-        if (!trafficIncidentData) return;
+    loadMap();
+  }, [setMap]);
 
-        // 1. Create buffer around obstacles
-        const obstacleBuffer: any = buffer(trafficIncidentData, 0.25, {
-          units: "kilometers"
-        });
+  useEffect(() => {
+    if (!trafficIncidentData) return;
 
-        // 2. Add visualization layer (optional)
+    const map = mapRef;
+    if (!map) return;
+
+    const directions = directionsRef.current;
+
+    if (!directions) return;
+
+    // Rebuild buffer and layer
+    const obstacleBuffer: any = buffer(trafficIncidentData, 0.25, {
+      units: "kilometers"
+    });
+    console.log("Obstacle Buffer:", obstacleBuffer);
+
+    if (!map.isStyleLoaded()) {
+      map.once("load", () => {
         if (!map.getSource("obstacle")) {
           map.addSource("obstacle", {
             type: "geojson",
@@ -132,37 +146,159 @@ const MapComponent = () => {
             }
           });
         }
+      });
+    } else {
+      if (!map.getSource("obstacle")) {
+        map.addSource("obstacle", {
+          type: "geojson",
+          data: obstacleBuffer
+        });
 
-        // 3. Hook into Mapbox Directions results
-        directions.on("route", (event: any) => {
-          const routes = event.route;
-          for (let i = 0; i < routes.length; i++) {
-            const route = routes[i];
-            const geojsonRoute:any = {
-              type: "Feature",
-              geometry: route.geometry
-            };
-
-            const isClear = booleanDisjoint(obstacleBuffer, geojsonRoute);
-
-            const color = isClear ? "#2ca25f" : "#de2d26";
-
-            // Paint logic (optional, MapboxDirections uses default blue otherwise)
-            map.setPaintProperty(`directions-route-${i}`, "line-color", color);
-
-            // You can also console or show alerts:
-            console.log(
-              `Route ${i + 1}: ${
-                isClear ? "✅ No collision" : "⚠️ Obstacle intersected"
-              }`
-            );
+        map.addLayer({
+          id: "obstacle-layer",
+          type: "fill",
+          source: "obstacle",
+          paint: {
+            "fill-color": "#de2d26",
+            "fill-opacity": 0.5
           }
         });
-      });
-    };
+      }
+    }
 
-    loadMap();
-  }, [setMap]);
+    for (let i = 0; i < 3; i++) {
+      map.addSource(`route${i}`, {
+        type: "geojson",
+        data: {
+          type: "Feature",
+          geometry: {
+            type: "LineString",
+            coordinates: []
+          }
+        }
+      });
+
+      map.addLayer({
+        id: `route${i}`,
+        type: "line",
+        source: `route${i}`,
+        layout: {
+          "line-join": "round",
+          "line-cap": "round"
+        },
+        paint: {
+          "line-color": "#cccccc",
+          "line-opacity": 0.5,
+          "line-width": 13,
+          "line-blur": 0.5
+        }
+      });
+    }
+
+    // directions.on("route", (event: any) => {
+    //   const routes = event.route;
+
+    //   const reportResults: { id: number; isClear: boolean }[] = [];
+
+    //   routes.forEach((route: any, i: number) => {
+    //     if (
+    //       !route.geometry ||
+    //       route.geometry.type !== "LineString" ||
+    //       !Array.isArray(route.geometry.coordinates)
+    //     ) {
+    //       console.warn("Invalid route geometry:", route.geometry);
+    //       return;
+    //     }
+
+    //     const geojsonRoute: any = {
+    //       type: "Feature",
+    //       geometry: {
+    //         type: "LineString",
+    //         coordinates: route.geometry.coordinates
+    //       },
+    //       properties: {}
+    //     };
+
+    //     const isClear = booleanDisjoint(obstacleBuffer, geojsonRoute);
+    //     console.log(`Route ${i} is clear:`, isClear);
+    //     const color = isClear ? "#2ca25f" : "#de2d26";
+
+    //     try {
+    //       map.setPaintProperty(`directions-route-${i}`, "line-color", color);
+    //     } catch (e) {
+    //       console.warn(`Failed to set line color for route ${i}:`, e);
+    //     }
+
+    //     // ⬇️ Push the result to the array
+    //     reportResults.push({
+    //       id: i,
+    //       isClear
+    //     });
+    //   });
+
+    //   // ⬅️ Store the final results in Zustand
+    //   setRouteReports(reportResults);
+    // });
+    directions.on("route", (event: any) => {
+      const reports = document.getElementById("reports");
+      if (!reports) return; // or handle gracefully
+      reports.innerHTML = "";
+
+      const report = reports.appendChild(document.createElement("div"));
+      // Add IDs to the routes
+      const routes = event.route.map((route: any, index: any) => ({
+        ...route,
+        id: index
+      }));
+
+      // Hide all routes by setting the opacity to zero.
+      for (let i = 0; i < 3; i++) {
+        map.setLayoutProperty(`route${i}`, "visibility", "none");
+      }
+
+      const reportResults: { id: number; isClear: boolean }[] = [];
+
+      for (const route of routes) {
+        map.setLayoutProperty(`route${route.id}`, "visibility", "visible");
+
+        const routeLine = polyline.toGeoJSON(route.geometry);
+        map.getSource(`route${route.id}`).setData(routeLine);
+
+        const isClear = booleanDisjoint(obstacleBuffer, routeLine) === true;
+
+        map.setPaintProperty(
+          `route${route.id}`,
+          "line-color",
+          isClear ? "#74c476" : "#de2d26"
+        );
+
+        // Collect result
+        reportResults.push({ id: route.id, isClear });
+      }
+
+      // Store the results in Zustand
+      setRouteReports(reportResults);
+    });
+
+    // Clear route layers when origin/destination is cleared
+    directions.on("clear", () => {
+      for (let i = 0; i < 3; i++) {
+        if (map.getSource(`route${i}`)) {
+          map.getSource(`route${i}`).setData({
+            type: "Feature",
+            geometry: {
+              type: "LineString",
+              coordinates: []
+            }
+          });
+          map.setLayoutProperty(`route${i}`, "visibility", "none");
+        }
+      }
+
+      // Optionally reset report state in Zustand
+      setRouteReports([]);
+    });
+  }, [trafficIncidentData, mapRef]);
 
   useEffect(() => {
     if (!mapRef) return;
@@ -213,6 +349,10 @@ const MapComponent = () => {
       <div
         ref={mapRefContainer}
         style={{ height: "100vh", width: "100%" }}
+      ></div>
+      <div
+        id="reports"
+        style={{ position: "absolute", top: 10, left: 10, zIndex: 9999 }}
       ></div>
     </div>
   );

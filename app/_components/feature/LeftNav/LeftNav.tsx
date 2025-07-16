@@ -16,11 +16,16 @@ const layers: LayerType[] = [
 
 export default function LeftNav() {
   const {
-    eventToggle, setEventToggle,
-    hospitalToggle, setHospitalToggle,
-    trafficToggle, setTrafficToggle,
-    temperatureToggle, setTemperatureToggle,
-    precipitationToggle, setPrecipitationToggle,
+    eventToggle,
+    setEventToggle,
+    hospitalToggle,
+    setHospitalToggle,
+    trafficToggle,
+    setTrafficToggle,
+    temperatureToggle,
+    setTemperatureToggle,
+    precipitationToggle,
+    setPrecipitationToggle,
     routeReports
   } = layerStore();
   const [hoverLayer, setHoverLayer] = useState<LayerType | null>(null);
@@ -31,12 +36,15 @@ export default function LeftNav() {
 
   console.log("routeReports", routeReports);
 
-  const toggleMap: Record<LayerType, { value: boolean; set: (val: boolean) => void }> = {
+  const toggleMap: Record<
+    LayerType,
+    { value: boolean; set: (val: boolean) => void }
+  > = {
     event: { value: eventToggle, set: setEventToggle },
     hospital: { value: hospitalToggle, set: setHospitalToggle },
     traffic: { value: trafficToggle, set: setTrafficToggle },
     temperature: { value: temperatureToggle, set: setTemperatureToggle },
-    precipitation: { value: precipitationToggle, set: setPrecipitationToggle },
+    precipitation: { value: precipitationToggle, set: setPrecipitationToggle }
   };
 
   return (
@@ -55,20 +63,23 @@ export default function LeftNav() {
               onMouseEnter={() => setHoverLayer(layer)}
               onMouseLeave={() => setHoverLayer(null)}
             >
-              <div className={`${styles.layerItem} ${value ? styles.active : ""}`}>
+              <div
+                className={`${styles.layerItem} ${value ? styles.active : ""}`}
+              >
                 <img
                   src={`/images/icn_${layer}${isActive ? "_active" : ""}.svg`}
                   alt={layer}
                   className={styles.icon}
                 />
               </div>
-              <span className={`${styles.label} ${value ? styles.activeLabel : ""}`}>
+              <span
+                className={`${styles.label} ${value ? styles.activeLabel : ""}`}
+              >
                 {layer.charAt(0).toUpperCase() + layer.slice(1)}
               </span>
             </div>
           );
         })}
-
       </div>
       {/* </div> */}
 
@@ -85,17 +96,34 @@ export default function LeftNav() {
 
       <hr className={styles.divider} />
 
-      <div className={styles.section}>
-        <p className={styles.subtitle}>🔁 Route Report</p>
-        <p className={styles.warning}>⚠️ Route 1 : should be avoided.</p>
-        <p className={`${styles.detail} ${styles.red}`}>
-          This route passes through obstacles.
-        </p>
-        <p className={styles.success}>✅ Route 2 : no obstacles!</p>
-        <p className={`${styles.detail} ${styles.green}`}>
-          This route doesn't pass through obstacles.
-        </p>
-      </div>
+      {routeReports.length > 0 && (
+        <div className={styles.section}>
+          <p className={styles.subtitle}>🔁 Route Report</p>
+          {routeReports.map((report) => (
+            <div key={report.id}>
+              {report.isClear ? (
+                <>
+                  <p className={styles.success}>
+                    ✅ Route {report.id + 1} : no obstacles!
+                  </p>
+                  <p className={`${styles.detail} ${styles.green}`}>
+                    This route doesn't pass through obstacles.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className={styles.warning}>
+                    ⚠️ Route {report.id + 1} : should be avoided.
+                  </p>
+                  <p className={`${styles.detail} ${styles.red}`}>
+                    This route passes through obstacles.
+                  </p>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
