@@ -2,7 +2,7 @@
     background-color: #ffffff;
     display: flex;
     flex-direction: column;
-    width: 270px;
+    width: 290px;
     max-height: 260px;
     overflow-y: auto;
     position: relative;
@@ -33,7 +33,7 @@
 }
 
 .eventPopupHeader {
-    min-width: 100px;
+    min-width: 115px;
     font-size: 15px !important;
     color: #6B7280;
 }
