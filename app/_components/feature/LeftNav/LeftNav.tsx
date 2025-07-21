@@ -5,11 +5,12 @@ import React, { useState } from "react";
 import styles from "./LeftNav.module.css";
 import { layerStore, LayerType } from "../../../provider/layerStore"; // Zustand store for layer management
 import { useMapStore } from "@/app/provider/mapStore";
+import Image from "next/image";
 
 const layers: LayerType[] = [
   "event",
   "hospital",
-  "traffic",
+  // "traffic",
   "temperature",
   "precipitation"
 ];
@@ -34,7 +35,7 @@ export default function LeftNav() {
   const formattedLng = cursorLatLng?.lng.toFixed(5) ?? "---";
   const formattedZoom = zoom?.toFixed(2) ?? "---";
 
-  console.log("routeReports", routeReports);
+  // console.log("routeReports", routeReports);
 
   const toggleMap: Record<
     LayerType,
@@ -42,9 +43,24 @@ export default function LeftNav() {
   > = {
     event: { value: eventToggle, set: setEventToggle },
     hospital: { value: hospitalToggle, set: setHospitalToggle },
-    traffic: { value: trafficToggle, set: setTrafficToggle },
+    // traffic: { value: trafficToggle, set: setTrafficToggle },
     temperature: { value: temperatureToggle, set: setTemperatureToggle },
     precipitation: { value: precipitationToggle, set: setPrecipitationToggle }
+  };
+
+  const mapStyles = [
+    { id: "dusk", label: "Dusk", icon: "icn_dusk" },
+    { id: "dawn", label: "Dawn", icon: "icn_dawn" },
+    { id: "night", label: "Night", icon: "icn_night" },
+    { id: "day", label: "Day", icon: "icn_day" },
+  ];
+
+  const { mapRef } = useMapStore();
+  const [selectedStyle, setSelectedStyle] = useState("dusk");
+
+  const handleStyleChange = (style: string) => {
+    setSelectedStyle(style);
+    mapRef.setConfigProperty?.("basemap", "lightPreset", style);
   };
 
   return (
@@ -92,6 +108,42 @@ export default function LeftNav() {
         </p>
         <p>Zoom Level : {formattedZoom}</p>
         {/* <p>MGRS : 47PPR61442298</p> */}
+      </div>
+
+      <hr className={styles.divider} />
+
+      <div className={styles.section}>
+        <p className={styles.subtitle}>🗺️ Map Style</p>
+        <div className={styles.styleGrid}>
+          {mapStyles.map((style) => (
+            <div className={styles.styleGridItemWrapper} key={style.id}>
+
+              <div className={styles.styleGridItem} key={style.id}>
+                <div
+                  key={style.id}
+                  className={`${styles.styleWrapper} ${selectedStyle === style.id ? styles.activeStyle : ""
+                    }`}
+                  onClick={() => handleStyleChange(style.id)}
+                >
+                  <Image
+                    width={38}
+                    height={38}
+                    src={`/icon/${style.icon}.png`}
+                    alt={style.label}
+                    className={styles.mapStyleIcon}
+                  />
+                </div>
+              </div>
+              <span
+                className={`${styles.label} ${selectedStyle === style.id ? styles.activeLabel : ""
+                  }`}
+              >
+                {style.label}
+              </span>
+            </div>
+
+          ))}
+        </div>
       </div>
 
       <hr className={styles.divider} />

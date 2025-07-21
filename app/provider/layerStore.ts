@@ -4,7 +4,7 @@ import { create } from "zustand";
 export type LayerType =
   | "event"
   | "hospital"
-  | "traffic"
+  // | "traffic"
   | "temperature"
   | "precipitation";
 

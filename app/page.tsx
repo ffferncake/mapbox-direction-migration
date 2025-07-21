@@ -103,7 +103,7 @@ const MapComponent = () => {
       map.addControl(
         new RulerControl({
           units: "miles",
-          labelFormat: (n) => `${n.toFixed(2)} miles`
+          labelFormat: (n:any) => `${n.toFixed(2)} miles`
         }),
         "bottom-right"
       );
