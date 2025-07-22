@@ -45,7 +45,7 @@ export default function RootLayout({
               padding: 0,
             }}
           >
-            
+
             {children}
             <ClientLayerHandler />
           </main>

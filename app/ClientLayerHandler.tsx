@@ -19,9 +19,8 @@ export default function ClientLayerHandler() {
         style={{ left: showNav ? "285px" : "0px" }}
       >
         <span
-          className={`${styles.toggleIcon} ${
-            showNav ? styles.toggleIconRotated : ""
-          }`}
+          className={`${styles.toggleIcon} ${showNav ? styles.toggleIconRotated : ""
+            }`}
         >
           ❯
         </span>
