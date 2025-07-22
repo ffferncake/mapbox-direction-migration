@@ -165,45 +165,45 @@ export default function IncidentLayer() {
       });
     }
 
-    // Temperature Overlay
-    if (temperatureToggle) {
-      map.addSource("temperature-source", {
-        type: "raster",
-        tiles: [
-          "https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=152118f99e361e7816ebd28eb775a6c6"
-        ],
-        tileSize: 256
-      });
+    // // Temperature Overlay
+    // if (temperatureToggle) {
+    //   map.addSource("temperature-source", {
+    //     type: "raster",
+    //     tiles: [
+    //       "https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=152118f99e361e7816ebd28eb775a6c6"
+    //     ],
+    //     tileSize: 256
+    //   });
 
-      map.addLayer({
-        id: "temperature-layer",
-        type: "raster",
-        source: "temperature-source",
-        layout: {
-          visibility: "visible"
-        }
-      });
-    }
+    //   map.addLayer({
+    //     id: "temperature-layer",
+    //     type: "raster",
+    //     source: "temperature-source",
+    //     layout: {
+    //       visibility: "visible"
+    //     }
+    //   });
+    // }
 
-    // Precipitation Overlay
-    if (precipitationToggle) {
-      map.addSource("precipitation-source", {
-        type: "raster",
-        tiles: [
-          "https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=152118f99e361e7816ebd28eb775a6c6"
-        ],
-        tileSize: 256
-      });
+    // // Precipitation Overlay
+    // if (precipitationToggle) {
+    //   map.addSource("precipitation-source", {
+    //     type: "raster",
+    //     tiles: [
+    //       "https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=152118f99e361e7816ebd28eb775a6c6"
+    //     ],
+    //     tileSize: 256
+    //   });
 
-      map.addLayer({
-        id: "precipitation-layer",
-        type: "raster",
-        source: "precipitation-source",
-        layout: {
-          visibility: "visible"
-        }
-      });
-    }
+    //   map.addLayer({
+    //     id: "precipitation-layer",
+    //     type: "raster",
+    //     source: "precipitation-source",
+    //     layout: {
+    //       visibility: "visible"
+    //     }
+    //   });
+    // }
 
     // Cleanup popup when clicking elsewhere (only if the layers exist)
     map.on("click", (e: any) => {

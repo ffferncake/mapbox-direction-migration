@@ -11,8 +11,10 @@ const layers: LayerType[] = [
   "event",
   "hospital",
   // "traffic",
+  "wind_animation",
+  "wind",
   "temperature",
-  "precipitation"
+  "precipitation",
 ];
 
 export default function LeftNav() {
@@ -23,11 +25,15 @@ export default function LeftNav() {
     setHospitalToggle,
     trafficToggle,
     setTrafficToggle,
+    windToggle,
+    setWindToggle,
+    windAniToggle,
+    setWindAniToggle,
     temperatureToggle,
     setTemperatureToggle,
     precipitationToggle,
     setPrecipitationToggle,
-    routeReports
+    routeReports,
   } = layerStore();
   const [hoverLayer, setHoverLayer] = useState<LayerType | null>(null);
   const { cursorLatLng, zoom } = useMapStore();
@@ -44,8 +50,10 @@ export default function LeftNav() {
     event: { value: eventToggle, set: setEventToggle },
     hospital: { value: hospitalToggle, set: setHospitalToggle },
     // traffic: { value: trafficToggle, set: setTrafficToggle },
+    wind: { value: windToggle, set: setWindToggle },
+    wind_animation: { value: windAniToggle, set: setWindAniToggle },
     temperature: { value: temperatureToggle, set: setTemperatureToggle },
-    precipitation: { value: precipitationToggle, set: setPrecipitationToggle }
+    precipitation: { value: precipitationToggle, set: setPrecipitationToggle },
   };
 
   const mapStyles = [
@@ -91,7 +99,10 @@ export default function LeftNav() {
               <span
                 className={`${styles.label} ${value ? styles.activeLabel : ""}`}
               >
-                {layer.charAt(0).toUpperCase() + layer.slice(1)}
+                {layer
+                  .split("_")
+                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                  .join(" ")}{" "}
               </span>
             </div>
           );
@@ -117,31 +128,31 @@ export default function LeftNav() {
         <div className={styles.styleGrid}>
           {mapStyles.map((style) => (
             <div className={styles.styleGridItemWrapper} key={style.id}>
-
               <div className={styles.styleGridItem} key={style.id}>
                 <div
                   key={style.id}
-                  className={`${styles.styleWrapper} ${selectedStyle === style.id ? styles.activeStyle : ""
-                    }`}
+                  className={`${styles.styleWrapper} ${
+                    selectedStyle === style.id ? styles.activeStyle : ""
+                  }`}
                   onClick={() => handleStyleChange(style.id)}
                 >
                   <Image
                     width={38}
                     height={38}
-                    src={`/icon/${style.icon}.png`}
+                    src={`/icon/${style.icon}.svg`}
                     alt={style.label}
                     className={styles.mapStyleIcon}
                   />
                 </div>
               </div>
               <span
-                className={`${styles.label} ${selectedStyle === style.id ? styles.activeLabel : ""
-                  }`}
+                className={`${styles.label} ${
+                  selectedStyle === style.id ? styles.activeLabel : ""
+                }`}
               >
                 {style.label}
               </span>
             </div>
-
           ))}
         </div>
       </div>

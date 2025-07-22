@@ -5,6 +5,8 @@ export type LayerType =
   | "event"
   | "hospital"
   // | "traffic"
+  | "wind"
+  | "wind_animation"
   | "temperature"
   | "precipitation";
 
@@ -17,6 +19,12 @@ export interface LayerStore {
 
   hospitalToggle: boolean;
   setHospitalToggle: (toggle: boolean) => void;
+
+  windToggle: boolean;
+  setWindToggle: (toggle: boolean) => void;
+
+    windAniToggle: boolean;
+  setWindAniToggle: (toggle: boolean) => void;
 
   temperatureToggle: boolean;
   setTemperatureToggle: (toggle: boolean) => void;
@@ -54,6 +62,12 @@ export const layerStore = create<LayerStore>((set) => ({
   hospitalToggle: false,
   setHospitalToggle: (toggle: boolean) => set({ hospitalToggle: toggle }),
 
+  windToggle: false,
+  setWindToggle: (toggle: boolean) => set({ windToggle: toggle }),
+
+  windAniToggle: false,
+  setWindAniToggle: (toggle: boolean) => set({ windAniToggle: toggle }),
+
   temperatureToggle: false,
   setTemperatureToggle: (toggle: boolean) => set({ temperatureToggle: toggle }),
 
@@ -74,5 +88,5 @@ export const layerStore = create<LayerStore>((set) => ({
   setTrafficIncidentData: (data) => set({ trafficIncidentData: data }),
 
   routeReports: [],
-  setRouteReports: (reports) => set({ routeReports: reports })
+  setRouteReports: (reports) => set({ routeReports: reports }),
 }));

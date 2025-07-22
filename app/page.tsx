@@ -13,6 +13,7 @@ import mapboxgl from "mapbox-gl";
 import MapboxDirections from "@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions";
 import { RulerControl, CompassControl, ZoomControl } from "mapbox-gl-controls";
 import { bboxPolygon, buffer, booleanDisjoint } from "@turf/turf";
+import { setToMidnight } from "./utils/common/convert-time";
 
 var polyline = require("@mapbox/polyline");
 
@@ -20,7 +21,18 @@ const MapComponent = () => {
   const mapRefContainer = useRef<any>(null);
   // const controllerRef = useRef<any>(null);
   const { mapRef, setMap, setCursorLatLng, setZoom } = useMapStore();
-  const { trafficIncidentData, setRouteReports } = layerStore();
+  const {
+    trafficIncidentData,
+    setRouteReports,
+    setMapsgl,
+    controllerRef,
+    setControllerRef,
+    mapsgl,
+    windToggle,
+    windAniToggle,
+    temperatureToggle,
+    precipitationToggle,
+  } = layerStore();
   const directionsRef = useRef<any>(null);
 
   // useEffect(() => {
@@ -76,25 +88,26 @@ const MapComponent = () => {
 
       const map = new mapboxgl.Map({
         container: mapRefContainer.current,
-        style: "mapbox://styles/mapbox/standard",
+        // style: "mapbox://styles/mapbox/standard",
+        style: "mapbox://styles/mapbox/navigation-preview-night-v4",
         zoom: 13,
         center: [100.4818, 13.7463],
-        projection: "mercator"
+        projection: "mercator",
       });
 
       setMap(map);
 
-      directionsRef.current = new MapboxDirections({
-        accessToken: mapboxgl.accessToken,
-        unit: "metric",
-        profile: "mapbox/driving",
-        alternatives: true,
-        geometries: "geojson",
-        controls: { instructions: true },
-        flyTo: true
-      });
+      // directionsRef.current = new MapboxDirections({
+      //   accessToken: mapboxgl.accessToken,
+      //   unit: "metric",
+      //   profile: "mapbox/driving",
+      //   alternatives: true,
+      //   geometries: "geojson",
+      //   controls: { instructions: true },
+      //   flyTo: true,
+      // });
 
-      map.addControl(directionsRef.current, "top-right");
+      // map.addControl(directionsRef.current, "top-right");
       map.addControl(new ZoomControl(), "bottom-right");
       map.addControl(new CompassControl(), "bottom-right");
       map.on("ruler.on", () => console.log("ruler: on"));
@@ -103,7 +116,7 @@ const MapComponent = () => {
       map.addControl(
         new RulerControl({
           units: "miles",
-          labelFormat: (n:any) => `${n.toFixed(2)} miles`
+          labelFormat: (n: any) => `${n.toFixed(2)} miles`,
         }),
         "bottom-right"
       );
@@ -124,16 +137,16 @@ const MapComponent = () => {
 
     // Rebuild buffer and layer
     const obstacleBuffer: any = buffer(trafficIncidentData, 0.25, {
-      units: "kilometers"
+      units: "kilometers",
     });
     console.log("Obstacle Buffer:", obstacleBuffer);
 
     if (!map.isStyleLoaded()) {
-      map.once("load", () => {
+      map.once("style.load", () => {
         if (!map.getSource("obstacle")) {
           map.addSource("obstacle", {
             type: "geojson",
-            data: obstacleBuffer
+            data: obstacleBuffer,
           });
 
           map.addLayer({
@@ -142,8 +155,8 @@ const MapComponent = () => {
             source: "obstacle",
             paint: {
               "fill-color": "#de2d26",
-              "fill-opacity": 0.5
-            }
+              "fill-opacity": 0.5,
+            },
           });
         }
       });
@@ -151,7 +164,7 @@ const MapComponent = () => {
       if (!map.getSource("obstacle")) {
         map.addSource("obstacle", {
           type: "geojson",
-          data: obstacleBuffer
+          data: obstacleBuffer,
         });
 
         map.addLayer({
@@ -160,85 +173,48 @@ const MapComponent = () => {
           source: "obstacle",
           paint: {
             "fill-color": "#de2d26",
-            "fill-opacity": 0.5
-          }
+            "fill-opacity": 0.5,
+          },
         });
       }
     }
 
     for (let i = 0; i < 3; i++) {
-      map.addSource(`route${i}`, {
-        type: "geojson",
-        data: {
-          type: "Feature",
-          geometry: {
-            type: "LineString",
-            coordinates: []
-          }
-        }
-      });
+      const sourceId = `route${i}`;
+      const layerId = `route${i}`;
 
-      map.addLayer({
-        id: `route${i}`,
-        type: "line",
-        source: `route${i}`,
-        layout: {
-          "line-join": "round",
-          "line-cap": "round"
-        },
-        paint: {
-          "line-color": "#cccccc",
-          "line-opacity": 0.5,
-          "line-width": 13,
-          "line-blur": 0.5
-        }
-      });
+      if (!map.getSource(sourceId)) {
+        map.addSource(sourceId, {
+          type: "geojson",
+          data: {
+            type: "Feature",
+            geometry: {
+              type: "LineString",
+              coordinates: [],
+            },
+          },
+        });
+      }
+
+      if (!map.getLayer(layerId)) {
+        map.addLayer({
+          id: layerId,
+          type: "line",
+          source: sourceId,
+          layout: {
+            "line-join": "round",
+            "line-cap": "round",
+          },
+          paint: {
+            "line-color": "#cccccc",
+            "line-opacity": 0.5,
+            "line-width": 13,
+            "line-blur": 0.5,
+          },
+        });
+      }
     }
 
-    // directions.on("route", (event: any) => {
-    //   const routes = event.route;
-
-    //   const reportResults: { id: number; isClear: boolean }[] = [];
-
-    //   routes.forEach((route: any, i: number) => {
-    //     if (
-    //       !route.geometry ||
-    //       route.geometry.type !== "LineString" ||
-    //       !Array.isArray(route.geometry.coordinates)
-    //     ) {
-    //       console.warn("Invalid route geometry:", route.geometry);
-    //       return;
-    //     }
-
-    //     const geojsonRoute: any = {
-    //       type: "Feature",
-    //       geometry: {
-    //         type: "LineString",
-    //         coordinates: route.geometry.coordinates
-    //       },
-    //       properties: {}
-    //     };
-
-    //     const isClear = booleanDisjoint(obstacleBuffer, geojsonRoute);
-    //     console.log(`Route ${i} is clear:`, isClear);
-    //     const color = isClear ? "#2ca25f" : "#de2d26";
-
-    //     try {
-    //       map.setPaintProperty(`directions-route-${i}`, "line-color", color);
-    //     } catch (e) {
-    //       console.warn(`Failed to set line color for route ${i}:`, e);
-    //     }
-
-    //     // ⬇️ Push the result to the array
-    //     reportResults.push({
-    //       id: i,
-    //       isClear
-    //     });
-    //   });
-
-    //   // ⬅️ Store the final results in Zustand
-    //   setRouteReports(reportResults);
-    // });
     directions.on("route", (event: any) => {
       const reports = document.getElementById("reports");
       if (!reports) return; // or handle gracefully
@@ -248,7 +224,7 @@ const MapComponent = () => {
       // Add IDs to the routes
       const routes = event.route.map((route: any, index: any) => ({
         ...route,
-        id: index
+        id: index,
       }));
 
       // Hide all routes by setting the opacity to zero.
@@ -288,8 +264,8 @@ const MapComponent = () => {
             type: "Feature",
             geometry: {
               type: "LineString",
-              coordinates: []
-            }
+              coordinates: [],
+            },
           });
           map.setLayoutProperty(`route${i}`, "visibility", "none");
         }
@@ -305,7 +281,7 @@ const MapComponent = () => {
 
     const handleLoad = () => {
       // mapRef.setConfigProperty?.("basemap", "lightPreset", "dawn");
-      mapRef.setConfigProperty("basemap", "lightPreset", "dusk");
+      // mapRef.setConfigProperty("basemap", "lightPreset", "dusk");
 
       const zoomBasedReveal = (value: any) => {
         return ["interpolate", ["linear"], ["zoom"], 11, 0.0, 13, value];
@@ -343,6 +319,158 @@ const MapComponent = () => {
     mapRef.on("mousemove", handleMouseMove);
     return () => mapRef.off("mousemove", handleMouseMove);
   }, [mapRef, setCursorLatLng, setZoom]);
+
+  const client_id = process.env.NEXT_PUBLIC_XWEATHER_CLIENT_ID;
+  const client_secret = process.env.NEXT_PUBLIC_XWEATHER_CLIENT_SECRET;
+  const mapStyleRef = useRef("");
+
+  // 컴포넌트 마운트 시에만 mapsgl을 동적으로 불러옵니다.
+  useEffect(() => {
+    try {
+      const mapsgl = require("@aerisweather/mapsgl");
+      setMapsgl(mapsgl);
+    } catch (error) {
+      console.error("Error loading mapsgl module:", error);
+    }
+  }, []);
+
+  const control = useRef<any>(null);
+
+  useEffect(() => {
+    if (mapRef && mapsgl) {
+      const account = new mapsgl.Account(client_id, client_secret);
+      const now = new Date();
+      const startDate = setToMidnight(new Date(now.getTime() - 72 * 3600000));
+      const endDate = setToMidnight(new Date(now.getTime() + 168 * 3600000));
+
+      if (!controllerRef) {
+        const controller = new mapsgl.MapboxMapController(mapRef, {
+          account,
+          animation: {
+            start: startDate,
+            end: endDate,
+            repeat: true,
+          },
+          units: {
+            speed: "kts",
+          },
+        });
+
+        setControllerRef(controller);
+        control.current = controller;
+
+        controller.on("load", () => {
+          setControllerRef(controller);
+        });
+      }
+    }
+  }, [mapRef, mapsgl, controllerRef, windToggle]);
+
+  // manage active weather layers
+  useEffect(() => {
+    if (!mapRef || !mapsgl || !controllerRef) return;
+    controllerRef.addDataInspectorControl();
+
+    try {
+      // WIND
+      if (windToggle) {
+        controllerRef.addWeatherLayer?.("wind-barbs", {
+          data: {
+            evaluator: {
+              title: "Winds",
+              fn: (value: any) => {
+                const speed = value.speed;
+                const angle = value.angle - 180;
+                const msToKnots = (ms: number) => ms * 1.94384;
+                return `${mapsgl.units.degToDir(angle)} ${msToKnots(
+                  speed
+                ).toFixed(1)} knots , ${mapsgl.units
+                  .msToKph(speed)
+                  .toFixed(1)} kph`;
+              },
+            },
+          },
+        });
+      } else {
+        try {
+          controllerRef.removeWeatherLayer?.("wind-barbs");
+        } catch (err) {
+          console.warn("wind-barbs layer not found during removal:", err);
+        }
+      }
+
+      // WIND ANIMATION
+      if (windAniToggle) {
+        controllerRef.addWeatherLayer("wind-speeds", {
+          paint: { opacity: 0.3 },
+        });
+
+        controllerRef.addWeatherLayer("wind-particles", {
+          paint: {
+            sample: {
+              colorscale: {
+                stops: [0, "#ffffff", 1, "#ffffff"],
+              },
+            },
+            particle: {
+              count: Math.pow(256, 2),
+              size: 2,
+              speed: 2,
+            },
+          },
+        });
+      } else {
+        controllerRef.removeWeatherLayer?.("wind-speeds");
+        controllerRef.removeWeatherLayer?.("wind-particles");
+      }
+
+      // TEMPERATURE
+      if (temperatureToggle) {
+        controllerRef.addWeatherLayer?.("temperatures-contour", {
+          // paint: {
+          //   opacity: 0.5,
+          // },
+        });
+        controllerRef.addWeatherLayer?.("temperatures", {
+          paint: {
+            opacity: 0.2,
+          },
+        });
+      } else {
+        try {
+          controllerRef.removeWeatherLayer?.("temperatures");
+          controllerRef.removeWeatherLayer?.("temperatures-contour");
+        } catch (err) {
+          console.warn("temperatures layer not found during removal:", err);
+        }
+      }
+
+      // PRECIPITATION
+      if (precipitationToggle) {
+        controllerRef.addWeatherLayer?.("radar", {
+          paint: {
+            opacity: 0.8,
+          },
+        });
+      } else {
+        try {
+          controllerRef.removeWeatherLayer?.("radar");
+        } catch (err) {
+          console.warn("radar layer not found during removal:", err);
+        }
+      }
+    } catch (e) {
+      console.error("Error managing weather layers:", e);
+    }
+  }, [
+    windToggle,
+    windAniToggle,
+    temperatureToggle,
+    precipitationToggle,
+    mapRef,
+    controllerRef,
+    mapsgl,
+  ]);
 
   return (
     <div>

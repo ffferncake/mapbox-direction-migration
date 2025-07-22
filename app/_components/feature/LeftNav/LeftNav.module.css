@@ -11,6 +11,7 @@
   left: 0;
   top: 0px;
   height: calc(100% - 56px);
+  overflow: auto;
 }
 
 .subtitle {
@@ -171,7 +172,7 @@
 } */
 
 .label {
-  font-size: 12px;
+  font-size: 11px;
   margin-top: 4px;
   color: #ccc;
 }
