@@ -12,6 +12,7 @@
     "@aerisweather/mapsgl": "^1.7.0",
     "@mapbox/mapbox-gl-directions": "^4.3.1",
     "@mapbox/polyline": "^1.2.1",
+    "@turf/dissolve": "^7.2.0",
     "@turf/turf": "^7.2.0",
     "mapbox-gl": "^3.13.0",
     "mapbox-gl-controls": "^2.3.5",

@@ -1,18 +1,21 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-var */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-require-imports */
 "use client";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import "@aerisweather/mapsgl/dist/mapsgl.css";
 import { useMapStore } from "./provider/mapStore"; // Zustand store for global map management
-import IncidentLayer from "./_components/feature/LeftNav/_component/IncidentLayer";
 import { layerStore } from "@/app/provider/layerStore";
 import "@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions.css"; // Import Mapbox Directions CSS
 import mapboxgl from "mapbox-gl";
 import MapboxDirections from "@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions";
 import { RulerControl, CompassControl, ZoomControl } from "mapbox-gl-controls";
-import { bboxPolygon, buffer, booleanDisjoint } from "@turf/turf";
+import { point, featureCollection, buffer, booleanDisjoint, union, cleanCoords, simplify, convex } from "@turf/turf";
+import dissolve from "@turf/dissolve";
 
 var polyline = require("@mapbox/polyline");
 
@@ -22,54 +25,79 @@ const MapComponent = () => {
   const { mapRef, setMap, setCursorLatLng, setZoom } = useMapStore();
   const { trafficIncidentData, setRouteReports } = layerStore();
   const directionsRef = useRef<any>(null);
+  const [forecastPoints, setForecastPoints] = useState<any>([]);
 
-  // useEffect(() => {
-  //   const mapboxgl = require("mapbox-gl");
-  //   const MapboxDirections = require('@mapbox/mapbox-gl-directions');
-  //   // const mapsgl = require("@aerisweather/mapsgl");
+  const parseForecastText = (text: string) => {
+    const lines = text.split("\n").map((line) => line.trim());
+    const forecastPoints = [];
 
-  //   mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+    for (const line of lines) {
+      if (line.startsWith("#") || !line.trim()) continue; // skip headers/comments
 
-  //   const map = new mapboxgl.Map({
-  //     container: mapRefContainer.current,
-  //     style: "mapbox://styles/mapbox/standard",
-  //     // style: "mapbox://styles/mapbox/navigation-preview-night-v4",
-  //     zoom: 13,
-  //     center: [100.4818, 13.7463],
-  //     // pitch: 74,
-  //     // bearing: 12.8,
-  //     // hash: true
-  //     projection: "mercator"
-  //   });
-  //   setMap(map);
+      const parts = line.split(/\s+/);
+      if (parts.length < 20) continue;
 
-  //   const directions = new MapboxDirections({
-  //     accessToken: mapboxgl.accessToken,
-  //     // interactive: false,
-  //     unit: "metric",
-  //     profile: "mapbox/driving",
-  //     alternatives: true,
-  //     geometries: "geojson",
-  //     controls: { instructions: true },
-  //     flyTo: true
-  //   });
+      const lat = parseFloat(parts[7]);
+      const lon = parseFloat(parts[8]);
+      const rad = parseInt(parts[15]); // RAD column (usually RAD15 or RAD)
+      const ws = parseInt(parts[11]); // WS = wind speed
+      const ps = parseInt(parts[10]); // PS = pressure
+      const timeRaw = parts[6]; // e.g., 202507231200
 
-  //   map.addControl(directions, 'top-left');
+      // ⏰ Convert to UTC and also get local time string (e.g., KST)
+      const utcTimeStr = `${timeRaw.slice(0, 4)}-${timeRaw.slice(4, 6)}-${timeRaw.slice(6, 8)}T${timeRaw.slice(8, 10)}:${timeRaw.slice(10)}:00Z`;
+      const localTime = new Date(utcTimeStr).toLocaleString("en-US", {
+        timeZone: "Asia/Seoul",
+        hour12: true,
+      });
 
-  //   // const account = new mapsgl.Account(
-  //   //   "dj3hazg1e9Evj9EcFg9fz",
-  //   //   "6ngFwXzTQx7scqQbSeXGUlvWVS8IcAL4KzeHOsBc"
-  //   // );
+      forecastPoints.push({
+        lat,
+        lon,
+        rad,
+        ws,
+        ps,
+        time: utcTimeStr,     // UTC string
+        localTime,            // Local time string (e.g., 2025. 7. 28. 19:00:00)
+      });
+    }
 
-  //   // const controller = new mapsgl.MapboxMapController(map, {
-  //   //   account
-  //   // });
-  //   // controllerRef.current = controller;
+    return forecastPoints;
+  };
 
-  //   // controller.on("load", () => {
-  //   //   setController(controller);
-  //   // });
-  // }, [setMap]);
+  console.log("forecastPoints", forecastPoints)
+
+  useEffect(() => {
+    const fetchForecastData = async () => {
+      try {
+        const res = await fetch("/api/kma-proxy");
+        const text = await res.text();
+        const parsed = parseForecastText(text);
+        setForecastPoints(parsed);
+      } catch (err) {
+        console.error("Failed to fetch forecast data", err);
+      }
+    };
+
+    fetchForecastData();
+  }, []);
+
+
+  useEffect(() => {
+    const fetchForecastData = async () => {
+      try {
+        const res = await fetch("/api/kma-proxy");
+        const text = await res.text();
+        const parsed = parseForecastText(text);
+        setForecastPoints(parsed);
+      } catch (err) {
+        console.error("Failed to fetch forecast data", err);
+      }
+    };
+
+    fetchForecastData();
+  }, []);
+
   useEffect(() => {
     const loadMap = async () => {
       mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
@@ -103,7 +131,7 @@ const MapComponent = () => {
       map.addControl(
         new RulerControl({
           units: "miles",
-          labelFormat: (n:any) => `${n.toFixed(2)} miles`
+          labelFormat: (n: any) => `${n.toFixed(2)} miles`
         }),
         "bottom-right"
       );
@@ -119,8 +147,350 @@ const MapComponent = () => {
     if (!map) return;
 
     const directions = directionsRef.current;
-
     if (!directions) return;
+
+    // const forecastPoints = [
+    //   { lat: 14.3, lon: 143.6, rad: 0, ws: 18, ps: 1002, time: "2025-07-24T03:00:00Z" },
+    //   { lat: 14.9, lon: 143.6, rad: 0, ws: 18, ps: 1002, time: "2025-07-24T06:00:00Z" },
+    //   { lat: 15.9, lon: 143.4, rad: 0, ws: 18, ps: 1002, time: "2025-07-24T12:00:00Z" },
+    //   { lat: 16.2, lon: 143.1, rad: 0, ws: 18, ps: 1000, time: "2025-07-24T18:00:00Z" },
+    //   { lat: 17.7, lon: 143.8, rad: 50, ws: 21, ps: 994, time: "2025-07-25T06:00:00Z" },
+    //   { lat: 18.6, lon: 144.3, rad: 90, ws: 24, ps: 990, time: "2025-07-25T18:00:00Z" },
+    //   { lat: 19.6, lon: 144.8, rad: 110, ws: 27, ps: 985, time: "2025-07-26T06:00:00Z" },
+    //   { lat: 21.1, lon: 145.3, rad: 130, ws: 32, ps: 975, time: "2025-07-26T18:00:00Z" },
+    //   { lat: 25.4, lon: 145.7, rad: 190, ws: 35, ps: 970, time: "2025-07-27T18:00:00Z" },
+    //   { lat: 28.1, lon: 145.8, rad: 280, ws: 35, ps: 970, time: "2025-07-28T18:00:00Z" },
+    //   { lat: 30.3, lon: 147.3, rad: 410, ws: 29, ps: 980, time: "2025-07-29T18:00:00Z" }
+    // ];
+
+    const features: any = forecastPoints
+      .map((p: any) => {
+        if (p.rad === 0) return null;
+        const pt = point([p.lon, p.lat], {
+          wind: p.ws,
+          pressure: p.ps,
+          time: p.time,
+          localTime: p.localTime,
+        });
+        const radiusKm = p.rad;
+        return buffer(pt, radiusKm, { units: "kilometers" });
+      })
+      .filter((f: any) => f !== null);
+
+
+    const pointFeatures: any = [];
+    // let mergedCone: any = null;
+
+    // Build buffers + merge
+    forecastPoints.forEach((p: any) => {
+      const pt = point([p.lon, p.lat], {
+        wind: p.ws,
+        pressure: p.ps,
+        time: p.time,
+        localTime: p.localTime,
+      });
+
+      pointFeatures.push(pt); // for point plotting
+
+      // if (p.rad > 0) {
+      //   const radiusKm = p.rad
+      //   const circle = buffer(pt, radiusKm, { units: "kilometers" });
+
+      //   if (!mergedCone) {
+      //     mergedCone = circle;
+      //   } else {
+      //     try {
+      //       mergedCone = union(mergedCone, circle);
+      //     } catch (e) {
+      //       console.warn("Union failed for circle buffer", e);
+      //     }
+      //   }
+      // }
+    });
+
+    const circleFeatures: any = forecastPoints
+      .filter((p: any) => p.rad > 0)
+      .map((p: any) => {
+        const pt = point([p.lon, p.lat]);
+        const radiusKm = p.rad;
+        return buffer(pt, radiusKm, { units: "kilometers" });
+      });
+
+    // 1. Build buffer around each point
+    // 1. Build buffer around each point
+    const now = new Date();
+
+    // ⬇️ INSERT HERE: render first point without buffer
+    const firstPoint = forecastPoints.find((p: any) => {
+      const forecastTime = new Date(p.time);
+      return forecastTime >= now;
+    });
+
+    if (firstPoint) {
+      const pt = point([firstPoint.lon, firstPoint.lat], {
+        wind: firstPoint.ws,
+        pressure: firstPoint.ps,
+        time: firstPoint.time,
+      });
+
+      map.addSource("typhoon-current-point", {
+        type: "geojson",
+        data: pt,
+      });
+
+      map.addLayer({
+        id: "typhoon-current-point",
+        type: "circle",
+        source: "typhoon-current-point",
+        paint: {
+          "circle-radius": 7,
+          "circle-color": "#ff0000",
+          "circle-stroke-color": "#fff",
+          "circle-stroke-width": 2,
+        },
+      });
+    }
+
+    // ⬇️ Continue with future buffers only (excluding first point)
+    const circleBuffers: any = forecastPoints
+      .filter((p: any) => {
+        if (p.rad <= 0) return false;
+        const forecastTime = new Date(p.time);
+        return forecastTime > now; // ⬅️ strictly future
+      })
+      .map((p: any) => {
+        const center = point([p.lon, p.lat]);
+        const radiusKm = p.rad;
+        return buffer(center, radiusKm, { units: "kilometers", steps: 64 });
+      });
+
+    // Create pairwise convex hulls between consecutive circles
+    const segmentHulls: any[] = [];
+
+    for (let i = 0; i < circleBuffers.length - 1; i++) {
+      const circle1 = circleBuffers[i];
+      const circle2 = circleBuffers[i + 1];
+
+      const coords1 = circle1.geometry.coordinates[0];
+      const coords2 = circle2.geometry.coordinates[0];
+
+      const pairPoints = featureCollection([
+        ...coords1.map((c: any) => point(c)),
+        ...coords2.map((c: any) => point(c)),
+      ]);
+
+      const segment = convex(pairPoints);
+      if (segment) {
+        const cleaned = cleanCoords(segment);
+        const simplified = simplify(cleaned, { tolerance: 0.02, highQuality: true });
+        segmentHulls.push(simplified); // ✅ collect here
+      }
+    }
+
+
+    map.addSource("segment-hulls", {
+      type: "geojson",
+      data: featureCollection(segmentHulls),
+    });
+
+    map.addLayer({
+      id: "segment-hulls-fill",
+      type: "fill",
+      source: "segment-hulls",
+      paint: {
+        "fill-color": "#a6a6a6",
+        "fill-opacity": 0.3,
+      },
+    });
+
+    map.addLayer({
+      id: "segment-hulls-outline",
+      type: "line",
+      source: "segment-hulls",
+      paint: {
+        "line-color": "#ffaa00",
+        "line-width": 2,
+        "line-dasharray": [2, 2],
+      },
+    });
+
+    // // Add the outer cone (convex hull)
+    // map.addSource("typhoon-cone", {
+    //   type: "geojson",
+    //   data: smoothedCone,
+    // });
+
+    // map.addLayer({
+    //   id: "typhoon-cone-fill",
+    //   type: "fill",
+    //   source: "typhoon-cone",
+    //   paint: {
+    //     "fill-color": "#ffee88",
+    //     "fill-opacity": 0.4,
+    //   },
+    // });
+
+    // map.addLayer({
+    //   id: "typhoon-cone-outline",
+    //   type: "line",
+    //   source: "typhoon-cone",
+    //   paint: {
+    //     "line-color": "#888",
+    //     "line-width": 2,
+    //     "line-dasharray": [2, 2],
+    //   },
+    // });
+
+    const forecastLineCoords = forecastPoints.map((p: any) => [p.lon, p.lat]);
+
+    const forecastLineGeoJSON = {
+      type: "Feature",
+      geometry: {
+        type: "LineString",
+        coordinates: forecastLineCoords
+      }
+    };
+
+    // Add source
+    map.addSource("forecast-line", {
+      type: "geojson",
+      data: forecastLineGeoJSON
+    });
+
+    // Add line layer
+    map.addLayer({
+      id: "forecast-line",
+      type: "line",
+      source: "forecast-line",
+      layout: {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      paint: {
+        "line-color": "#0066ff", // Blue color
+        "line-width": 3
+      }
+    });
+
+
+    // Add circle buffers if needed (separate layer)
+    map.addSource("typhoon-circles", {
+      type: "geojson",
+      data: featureCollection(circleBuffers),
+    });
+
+    map.addLayer({
+      id: "typhoon-circles",
+      type: "line",
+      source: "typhoon-circles",
+      paint: {
+        "line-color": "#888",
+        "line-width": 1,
+        "line-dasharray": [2, 2],
+      },
+    });
+
+
+    const featureMultiple: any = featureCollection(circleFeatures);
+
+
+    // Dissolve to merge polygons
+    let mergedCone: any = dissolve(featureMultiple);
+
+    // Optional: check if multiple features exist after dissolve
+    if (mergedCone.type === "FeatureCollection") {
+      // Convert FeatureCollection to a single MultiPolygon feature
+      const allFeatures = mergedCone.features.filter((f: any) => f.geometry.type === "Polygon" || f.geometry.type === "MultiPolygon");
+
+      if (allFeatures.length === 1) {
+        mergedCone = allFeatures[0];
+      } else {
+        mergedCone = {
+          type: "Feature",
+          properties: {},
+          geometry: {
+            type: "MultiPolygon",
+            coordinates: allFeatures.flatMap((f: any) =>
+              f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates
+            ),
+          },
+        };
+      }
+    }
+
+    // Clean and simplify geometry
+    mergedCone = cleanCoords(mergedCone);
+    mergedCone = simplify(mergedCone, { tolerance: 0.01, highQuality: true });
+
+    // Add typhoon points
+    map.addSource("typhoon-points", {
+      type: "geojson",
+      data: featureCollection(pointFeatures),
+    });
+
+    map.addLayer({
+      id: "typhoon-points",
+      type: "circle",
+      source: "typhoon-points",
+      paint: {
+        "circle-radius": 5,
+        "circle-color": "#d7191c",
+        "circle-stroke-color": "#fff",
+        "circle-stroke-width": 1,
+      },
+    });
+
+    map.addLayer({
+      id: "typhoon-labels",
+      type: "symbol",
+      source: "typhoon-points",
+      layout: {
+        "text-field": ["concat", ["get", "localTime"], "\nWind: ", ["get", "wind"], " kts"],
+        "text-font": ["Open Sans Bold"],
+        "text-size": 12,
+        "text-offset": [0, 1.2],
+        "text-anchor": "top",
+      },
+      paint: {
+        "text-color": "#333",
+        "text-halo-color": "#fff",
+        "text-halo-width": 1.5,
+      },
+    });
+
+    if (mergedCone.type === "Feature" &&
+      (mergedCone.geometry.type === "Polygon" || mergedCone.geometry.type === "MultiPolygon")) {
+      if (map.getSource("typhoon-merged-cone")) {
+        (map.getSource("typhoon-merged-cone") as mapboxgl.GeoJSONSource).setData(mergedCone);
+      } else {
+        map.addSource("typhoon-merged-cone", {
+          type: "geojson",
+          data: mergedCone,
+        });
+
+        map.addLayer({
+          id: "typhoon-merged-cone-fill",
+          type: "fill",
+          source: "typhoon-merged-cone",
+          paint: {
+            "fill-color": "#a6a6a6",
+            "fill-opacity": 0.4,
+          },
+        });
+
+        map.addLayer({
+          id: "typhoon-merged-cone-outline",
+          type: "line",
+          source: "typhoon-merged-cone",
+          paint: {
+            "line-color": "#a6a6a6",
+            "line-width": 2,
+            "line-dasharray": [2, 2],
+          },
+        });
+      }
+    }
+
 
     // Rebuild buffer and layer
     const obstacleBuffer: any = buffer(trafficIncidentData, 0.25, {
@@ -166,6 +536,11 @@ const MapComponent = () => {
       }
     }
 
+    const bufferedCircles = circleFeatures.map((f: any) => buffer(f, 1, { units: 'kilometers' }));
+    const dissolved = dissolve(featureCollection(bufferedCircles));
+    console.log("dissolved", dissolved);
+
+
     for (let i = 0; i < 3; i++) {
       map.addSource(`route${i}`, {
         type: "geojson",
@@ -195,56 +570,11 @@ const MapComponent = () => {
       });
     }
 
-    // directions.on("route", (event: any) => {
-    //   const routes = event.route;
-
-    //   const reportResults: { id: number; isClear: boolean }[] = [];
-
-    //   routes.forEach((route: any, i: number) => {
-    //     if (
-    //       !route.geometry ||
-    //       route.geometry.type !== "LineString" ||
-    //       !Array.isArray(route.geometry.coordinates)
-    //     ) {
-    //       console.warn("Invalid route geometry:", route.geometry);
-    //       return;
-    //     }
-
-    //     const geojsonRoute: any = {
-    //       type: "Feature",
-    //       geometry: {
-    //         type: "LineString",
-    //         coordinates: route.geometry.coordinates
-    //       },
-    //       properties: {}
-    //     };
-
-    //     const isClear = booleanDisjoint(obstacleBuffer, geojsonRoute);
-    //     console.log(`Route ${i} is clear:`, isClear);
-    //     const color = isClear ? "#2ca25f" : "#de2d26";
-
-    //     try {
-    //       map.setPaintProperty(`directions-route-${i}`, "line-color", color);
-    //     } catch (e) {
-    //       console.warn(`Failed to set line color for route ${i}:`, e);
-    //     }
-
-    //     // ⬇️ Push the result to the array
-    //     reportResults.push({
-    //       id: i,
-    //       isClear
-    //     });
-    //   });
-
-    //   // ⬅️ Store the final results in Zustand
-    //   setRouteReports(reportResults);
-    // });
     directions.on("route", (event: any) => {
       const reports = document.getElementById("reports");
       if (!reports) return; // or handle gracefully
       reports.innerHTML = "";
 
-      const report = reports.appendChild(document.createElement("div"));
       // Add IDs to the routes
       const routes = event.route.map((route: any, index: any) => ({
         ...route,
@@ -307,9 +637,9 @@ const MapComponent = () => {
       // mapRef.setConfigProperty?.("basemap", "lightPreset", "dawn");
       mapRef.setConfigProperty("basemap", "lightPreset", "dusk");
 
-      const zoomBasedReveal = (value: any) => {
-        return ["interpolate", ["linear"], ["zoom"], 11, 0.0, 13, value];
-      };
+      // const zoomBasedReveal = (value: any) => {
+      //   return ["interpolate", ["linear"], ["zoom"], 11, 0.0, 13, value];
+      // };
 
       // mapRef.setRain?.({
       //   density: zoomBasedReveal(0.5),
