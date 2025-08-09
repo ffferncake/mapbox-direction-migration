@@ -11,6 +11,7 @@
   left: 0;
   top: 0px;
   height: calc(100% - 56px);
+  overflow: auto;
 }
 
 .subtitle {

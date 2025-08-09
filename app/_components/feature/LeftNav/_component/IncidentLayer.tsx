@@ -13,9 +13,10 @@ export default function IncidentLayer() {
     hospitalToggle,
     temperatureToggle,
     precipitationToggle,
+    cycloneToggle,
     mapsgl,
     setMapsgl,
-    setTrafficIncidentData
+    setTrafficIncidentData,
   } = layerStore();
   const client_id = process.env.NEXT_PUBLIC_XWEATHER_CLIENT_ID;
   const client_secret = process.env.NEXT_PUBLIC_XWEATHER_CLIENT_SECRET;
@@ -62,12 +63,12 @@ export default function IncidentLayer() {
           for (const point of data) {
             const coordinates = [
               parseFloat(point.longitude),
-              parseFloat(point.latitude)
+              parseFloat(point.latitude),
             ];
             const feature = {
               type: "Feature",
               geometry: { type: "Point", coordinates },
-              properties: point
+              properties: point,
             };
             trafficIncident.features.push(feature);
           }
@@ -78,7 +79,7 @@ export default function IncidentLayer() {
 
             map.addSource("trafficIncident", {
               type: "geojson",
-              data: trafficIncident
+              data: trafficIncident,
             });
 
             map.addLayer({
@@ -88,11 +89,34 @@ export default function IncidentLayer() {
               layout: {
                 "icon-image": "warning",
                 "icon-size": 0.8,
-                "icon-allow-overlap": true
-              }
+                "icon-allow-overlap": true,
+              },
             });
 
-            map.on("click", "trafficIncident", (e: any) => {
+            // map.on("click", "trafficIncident", (e: any) => {
+            //   const coords = e.features[0].geometry.coordinates;
+            //   const { title, description } = e.features[0].properties;
+
+            //   popup
+            //     .setLngLat(coords)
+            //     .setHTML(
+            //       `<div class="${styles.eventPopupContent}">
+            //                         <h2 class="${styles.eventPopuptitle}">${title}</h2>
+            //                         <div class="${styles.eventPopupDivider}"></div>
+            //                         <p>${description}</p></div>`
+            //     )
+            //     .addTo(map);
+            // });
+            map.on("mouseenter", "trafficIncident", () => {
+              map.getCanvas().style.cursor = "pointer";
+            });
+
+            map.on("mouseleave", "trafficIncident", () => {
+              map.getCanvas().style.cursor = "";
+              popup.remove();
+            });
+
+            map.on("mousemove", "trafficIncident", (e: any) => {
               const coords = e.features[0].geometry.coordinates;
               const { title, description } = e.features[0].properties;
 
@@ -100,9 +124,10 @@ export default function IncidentLayer() {
                 .setLngLat(coords)
                 .setHTML(
                   `<div class="${styles.eventPopupContent}">
-                                    <h2 class="${styles.eventPopuptitle}">${title}</h2>
-                                    <div class="${styles.eventPopupDivider}"></div>
-                                    <p>${description}</p></div>`
+                    <h2 class="${styles.eventPopuptitle}">${title}</h2>
+                    <div class="${styles.eventPopupDivider}"></div>
+                    <p>${description}</p>
+                  </div>`
                 )
                 .addTo(map);
             });
@@ -125,7 +150,7 @@ export default function IncidentLayer() {
 
         map.addSource("hospital", {
           type: "geojson",
-          data: "https://data.opendevelopmentmekong.net/dataset/ab20b509-2b7f-442e-8448-05d3a17651ac/resource/76253a1a-b472-4d64-b209-0ea3114f51f4/download/thailand_health_facilities_th.geojson"
+          data: "https://data.opendevelopmentmekong.net/dataset/ab20b509-2b7f-442e-8448-05d3a17651ac/resource/76253a1a-b472-4d64-b209-0ea3114f51f4/download/thailand_health_facilities_th.geojson",
         });
 
         map.addLayer({
@@ -136,29 +161,60 @@ export default function IncidentLayer() {
             "icon-image": "hospital",
             "icon-allow-overlap": true,
             "icon-size": 0.8,
-            visibility: "visible"
-          }
+            visibility: "visible",
+          },
         });
 
-        map.on("click", "hospital-layer", (e: any) => {
+        // map.on("click", "hospital-layer", (e: any) => {
+        //   const coordinates = e.features[0].geometry.coordinates.slice();
+        //   const agency = e.features[0].properties.Agency;
+        //   const ministry = e.features[0].properties.Ministry;
+        //   const department = e.features[0].properties.Department;
+
+        //   while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+        //     coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+        //   }
+
+        //   popup
+        //     .setLngLat(coordinates)
+        //     .setHTML(
+        //       `<div class="${styles.eventPopupContent}">
+        //                         <h2 class="${styles.eventPopuptitle}">${agency}</h2>
+        //                         <div class="${styles.eventPopupDivider}"></div>
+        //                         <div class="${styles.eventPopupWrapper}"><p class="${styles.eventPopupHeader}">Ministry : </p>${ministry}</div>
+        //                         <div class="${styles.eventPopupWrapper}"><p class="${styles.eventPopupHeader}">Department : </p>${department}</div>
+        //                         </div>`
+        //     )
+        //     .addTo(map);
+        // });
+        map.on("mouseenter", "hospital-layer", () => {
+          map.getCanvas().style.cursor = "pointer";
+        });
+
+        map.on("mouseleave", "hospital-layer", () => {
+          map.getCanvas().style.cursor = "";
+          popup.remove();
+        });
+
+        map.on("mousemove", "hospital-layer", (e: any) => {
           const coordinates = e.features[0].geometry.coordinates.slice();
           const agency = e.features[0].properties.Agency;
           const ministry = e.features[0].properties.Ministry;
           const department = e.features[0].properties.Department;
 
-          while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-          }
-
           popup
             .setLngLat(coordinates)
             .setHTML(
               `<div class="${styles.eventPopupContent}">
-                                <h2 class="${styles.eventPopuptitle}">${agency}</h2>
-                                <div class="${styles.eventPopupDivider}"></div>
-                                <div class="${styles.eventPopupWrapper}"><p class="${styles.eventPopupHeader}">Ministry : </p>${ministry}</div>
-                                <div class="${styles.eventPopupWrapper}"><p class="${styles.eventPopupHeader}">Department : </p>${department}</div>
-                                </div>`
+        <h2 class="${styles.eventPopuptitle}">${agency}</h2>
+        <div class="${styles.eventPopupDivider}"></div>
+        <div class="${styles.eventPopupWrapper}">
+          <p class="${styles.eventPopupHeader}">Ministry : </p>${ministry}
+        </div>
+        <div class="${styles.eventPopupWrapper}">
+          <p class="${styles.eventPopupHeader}">Department : </p>${department}
+        </div>
+      </div>`
             )
             .addTo(map);
         });
@@ -170,9 +226,9 @@ export default function IncidentLayer() {
       map.addSource("temperature-source", {
         type: "raster",
         tiles: [
-          "https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=152118f99e361e7816ebd28eb775a6c6"
+          "https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=152118f99e361e7816ebd28eb775a6c6",
         ],
-        tileSize: 256
+        tileSize: 256,
       });
 
       map.addLayer({
@@ -180,8 +236,8 @@ export default function IncidentLayer() {
         type: "raster",
         source: "temperature-source",
         layout: {
-          visibility: "visible"
-        }
+          visibility: "visible",
+        },
       });
     }
 
@@ -190,9 +246,9 @@ export default function IncidentLayer() {
       map.addSource("precipitation-source", {
         type: "raster",
         tiles: [
-          "https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=152118f99e361e7816ebd28eb775a6c6"
+          "https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=152118f99e361e7816ebd28eb775a6c6",
         ],
-        tileSize: 256
+        tileSize: 256,
       });
 
       map.addLayer({
@@ -200,8 +256,17 @@ export default function IncidentLayer() {
         type: "raster",
         source: "precipitation-source",
         layout: {
-          visibility: "visible"
-        }
+          visibility: "visible",
+        },
+      });
+    }
+
+    // tropical cyclone
+    if (cycloneToggle) {
+      import("@/app/lib/typhoon").then(({ renderTropicalCyclone }) => {
+        renderTropicalCyclone(map).catch((err) =>
+          console.error("Cyclone rendering error:", err)
+        );
       });
     }
 
@@ -215,7 +280,7 @@ export default function IncidentLayer() {
       if (layersToCheck.length === 0) return;
 
       const features = map.queryRenderedFeatures(e.point, {
-        layers: layersToCheck
+        layers: layersToCheck,
       });
 
       if (features.length === 0) {
@@ -227,7 +292,8 @@ export default function IncidentLayer() {
     hospitalToggle,
     temperatureToggle,
     precipitationToggle,
-    mapRef
+    cycloneToggle,
+    mapRef,
   ]);
 
   return null;

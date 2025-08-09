@@ -6,7 +6,8 @@ export type LayerType =
   | "hospital"
   // | "traffic"
   | "temperature"
-  | "precipitation";
+  | "precipitation"
+  | "cyclone";
 
 export interface LayerStore {
   stormLayerVisible: boolean;
@@ -23,6 +24,9 @@ export interface LayerStore {
 
   precipitationToggle: boolean;
   setPrecipitationToggle: (toggle: boolean) => void;
+
+  cycloneToggle: boolean;
+  setCycloneToggle: (toggle: boolean) => void;
 
   trafficToggle: boolean;
   setTrafficToggle: (toggle: boolean) => void;
@@ -61,6 +65,9 @@ export const layerStore = create<LayerStore>((set) => ({
   setPrecipitationToggle: (toggle: boolean) =>
     set({ precipitationToggle: toggle }),
 
+  cycloneToggle: false,
+  setCycloneToggle: (toggle: boolean) => set({ cycloneToggle: toggle }),
+
   trafficToggle: false,
   setTrafficToggle: (toggle: boolean) => set({ trafficToggle: toggle }),
 
@@ -74,5 +81,5 @@ export const layerStore = create<LayerStore>((set) => ({
   setTrafficIncidentData: (data) => set({ trafficIncidentData: data }),
 
   routeReports: [],
-  setRouteReports: (reports) => set({ routeReports: reports })
+  setRouteReports: (reports) => set({ routeReports: reports }),
 }));

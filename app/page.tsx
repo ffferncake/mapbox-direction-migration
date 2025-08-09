@@ -22,6 +22,7 @@ const MapComponent = () => {
   const { mapRef, setMap, setCursorLatLng, setZoom } = useMapStore();
   const { trafficIncidentData, setRouteReports } = layerStore();
   const directionsRef = useRef<any>(null);
+  const hasBoundDirections = useRef(false);
 
   // useEffect(() => {
   //   const mapboxgl = require("mapbox-gl");
@@ -79,7 +80,7 @@ const MapComponent = () => {
         style: "mapbox://styles/mapbox/standard",
         zoom: 13,
         center: [100.4818, 13.7463],
-        projection: "mercator"
+        projection: "mercator",
       });
 
       setMap(map);
@@ -91,7 +92,7 @@ const MapComponent = () => {
         alternatives: true,
         geometries: "geojson",
         controls: { instructions: true },
-        flyTo: true
+        flyTo: true,
       });
 
       map.addControl(directionsRef.current, "top-right");
@@ -103,7 +104,7 @@ const MapComponent = () => {
       map.addControl(
         new RulerControl({
           units: "miles",
-          labelFormat: (n:any) => `${n.toFixed(2)} miles`
+          labelFormat: (n: any) => `${n.toFixed(2)} miles`,
         }),
         "bottom-right"
       );
@@ -124,7 +125,7 @@ const MapComponent = () => {
 
     // Rebuild buffer and layer
     const obstacleBuffer: any = buffer(trafficIncidentData, 0.25, {
-      units: "kilometers"
+      units: "kilometers",
     });
     console.log("Obstacle Buffer:", obstacleBuffer);
 
@@ -133,7 +134,7 @@ const MapComponent = () => {
         if (!map.getSource("obstacle")) {
           map.addSource("obstacle", {
             type: "geojson",
-            data: obstacleBuffer
+            data: obstacleBuffer,
           });
 
           map.addLayer({
@@ -142,8 +143,8 @@ const MapComponent = () => {
             source: "obstacle",
             paint: {
               "fill-color": "#de2d26",
-              "fill-opacity": 0.5
-            }
+              "fill-opacity": 0.5,
+            },
           });
         }
       });
@@ -151,7 +152,7 @@ const MapComponent = () => {
       if (!map.getSource("obstacle")) {
         map.addSource("obstacle", {
           type: "geojson",
-          data: obstacleBuffer
+          data: obstacleBuffer,
         });
 
         map.addLayer({
@@ -160,39 +161,122 @@ const MapComponent = () => {
           source: "obstacle",
           paint: {
             "fill-color": "#de2d26",
-            "fill-opacity": 0.5
-          }
+            "fill-opacity": 0.5,
+          },
         });
       }
     }
 
-    for (let i = 0; i < 3; i++) {
-      map.addSource(`route${i}`, {
-        type: "geojson",
-        data: {
-          type: "Feature",
-          geometry: {
-            type: "LineString",
-            coordinates: []
-          }
-        }
-      });
+    const addRouteSourcesAndLayers = () => {
+      for (let i = 0; i < 3; i++) {
+        const sourceId = `route${i}`;
+        const layerId = `route${i}`;
 
-      map.addLayer({
-        id: `route${i}`,
-        type: "line",
-        source: `route${i}`,
-        layout: {
-          "line-join": "round",
-          "line-cap": "round"
-        },
-        paint: {
-          "line-color": "#cccccc",
-          "line-opacity": 0.5,
-          "line-width": 13,
-          "line-blur": 0.5
+        if (!map.getSource(sourceId)) {
+          map.addSource(sourceId, {
+            type: "geojson",
+            data: {
+              type: "Feature",
+              geometry: {
+                type: "LineString",
+                coordinates: [],
+              },
+            },
+          });
         }
+
+        if (!map.getLayer(layerId)) {
+          map.addLayer({
+            id: layerId,
+            type: "line",
+            source: sourceId,
+            layout: {
+              "line-join": "round",
+              "line-cap": "round",
+            },
+            paint: {
+              "line-color": "#cccccc",
+              "line-opacity": 0.5,
+              "line-width": 13,
+              "line-blur": 0.5,
+            },
+          });
+        }
+      }
+
+      if (!hasBoundDirections.current && directionsRef.current) {
+        const directions = directionsRef.current;
+
+        directions.on("route", (event: any) => {
+          const reports = document.getElementById("reports");
+          if (!reports) return;
+          reports.innerHTML = "";
+
+          const report = reports.appendChild(document.createElement("div"));
+          const routes = event.route.map((route: any, index: any) => ({
+            ...route,
+            id: index,
+          }));
+
+          for (let i = 0; i < 3; i++) {
+            if (map.getLayer(`route${i}`)) {
+              map.setLayoutProperty(`route${i}`, "visibility", "none");
+            }
+          }
+
+          const reportResults: { id: number; isClear: boolean }[] = [];
+
+          for (const route of routes) {
+            if (!map.getSource(`route${route.id}`)) continue;
+            map.setLayoutProperty(`route${route.id}`, "visibility", "visible");
+
+            const routeLine = polyline.toGeoJSON(route.geometry);
+            map.getSource(`route${route.id}`).setData(routeLine);
+
+            const isClear = booleanDisjoint(obstacleBuffer, routeLine);
+
+            map.setPaintProperty(
+              `route${route.id}`,
+              "line-color",
+              isClear ? "#74c476" : "#de2d26"
+            );
+
+            reportResults.push({ id: route.id, isClear });
+          }
+
+          setRouteReports(reportResults);
+        });
+
+        directions.on("clear", () => {
+          for (let i = 0; i < 3; i++) {
+            if (map.getSource(`route${i}`)) {
+              map.getSource(`route${i}`).setData({
+                type: "Feature",
+                geometry: {
+                  type: "LineString",
+                  coordinates: [],
+                },
+              });
+            }
+
+            if (map.getLayer(`route${i}`)) {
+              map.setLayoutProperty(`route${i}`, "visibility", "none");
+            }
+          }
+
+          setRouteReports([]);
+        });
+
+        hasBoundDirections.current = true;
+      }
+    };
+
+    if (!map.isStyleLoaded()) {
+      map.once("load", () => {
+        addRouteSourcesAndLayers();
       });
+    } else {
+      addRouteSourcesAndLayers();
     }
 
     // directions.on("route", (event: any) => {
@@ -248,7 +332,7 @@ const MapComponent = () => {
       // Add IDs to the routes
       const routes = event.route.map((route: any, index: any) => ({
         ...route,
-        id: index
+        id: index,
       }));
 
       // Hide all routes by setting the opacity to zero.
@@ -288,8 +372,8 @@ const MapComponent = () => {
             type: "Feature",
             geometry: {
               type: "LineString",
-              coordinates: []
-            }
+              coordinates: [],
+            },
           });
           map.setLayoutProperty(`route${i}`, "visibility", "none");
         }

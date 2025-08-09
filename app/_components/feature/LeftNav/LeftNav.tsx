@@ -12,7 +12,8 @@ const layers: LayerType[] = [
   "hospital",
   // "traffic",
   "temperature",
-  "precipitation"
+  "precipitation",
+  "cyclone",
 ];
 
 export default function LeftNav() {
@@ -27,7 +28,9 @@ export default function LeftNav() {
     setTemperatureToggle,
     precipitationToggle,
     setPrecipitationToggle,
-    routeReports
+    cycloneToggle,
+    setCycloneToggle,
+    routeReports,
   } = layerStore();
   const [hoverLayer, setHoverLayer] = useState<LayerType | null>(null);
   const { cursorLatLng, zoom } = useMapStore();
@@ -45,7 +48,8 @@ export default function LeftNav() {
     hospital: { value: hospitalToggle, set: setHospitalToggle },
     // traffic: { value: trafficToggle, set: setTrafficToggle },
     temperature: { value: temperatureToggle, set: setTemperatureToggle },
-    precipitation: { value: precipitationToggle, set: setPrecipitationToggle }
+    precipitation: { value: precipitationToggle, set: setPrecipitationToggle },
+    cyclone: { value: cycloneToggle, set: setCycloneToggle },
   };
 
   const mapStyles = [
@@ -117,12 +121,12 @@ export default function LeftNav() {
         <div className={styles.styleGrid}>
           {mapStyles.map((style) => (
             <div className={styles.styleGridItemWrapper} key={style.id}>
-
               <div className={styles.styleGridItem} key={style.id}>
                 <div
                   key={style.id}
-                  className={`${styles.styleWrapper} ${selectedStyle === style.id ? styles.activeStyle : ""
-                    }`}
+                  className={`${styles.styleWrapper} ${
+                    selectedStyle === style.id ? styles.activeStyle : ""
+                  }`}
                   onClick={() => handleStyleChange(style.id)}
                 >
                   <Image
@@ -135,13 +139,13 @@ export default function LeftNav() {
                 </div>
               </div>
               <span
-                className={`${styles.label} ${selectedStyle === style.id ? styles.activeLabel : ""
-                  }`}
+                className={`${styles.label} ${
+                  selectedStyle === style.id ? styles.activeLabel : ""
+                }`}
               >
                 {style.label}
               </span>
             </div>
-
           ))}
         </div>
       </div>
