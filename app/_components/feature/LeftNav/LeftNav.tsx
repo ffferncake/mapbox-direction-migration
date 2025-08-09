@@ -132,7 +132,7 @@ export default function LeftNav() {
                   <Image
                     width={38}
                     height={38}
-                    src={`/icon/${style.icon}.png`}
+                    src={`/icon/${style.icon}.svg`}
                     alt={style.label}
                     className={styles.mapStyleIcon}
                   />
